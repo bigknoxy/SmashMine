@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1a1a2e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+  <title>SmashMine</title>
+  <link rel="stylesheet" href="/src/styles/game.css" />
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+    <div id="title-screen">
+      <h1 class="game-title">SmashMine</h1>
+      <button id="start-btn">TAP TO START</button>
+    </div>
+    <div id="mission-intro" class="overlay hidden">
+      <h2 id="mission-title"></h2>
+      <p id="mission-goal"></p>
+    </div>
+    <div id="hud" class="hidden">
+      <div id="hud-shards">Shards: <span id="shard-count">0/25</span></div>
+      <div id="hud-coins">Coins: <span id="coin-count">0</span></div>
+      <div id="hud-timer"><span id="timer-display">0:00</span></div>
+    </div>
+    <div id="smash-btn" class="action-btn hidden">SMASH</div>
+    <div id="special-btn" class="action-btn hidden">OP!</div>
+    <div id="joystick-zone" class="hidden"></div>
+    <div id="reward-screen" class="overlay hidden">
+      <h2>MISSION COMPLETE!</h2>
+      <div id="loot-summary"></div>
+      <h3>Choose an Upgrade</h3>
+      <div id="upgrade-cards"></div>
+      <button id="replay-btn">PLAY AGAIN</button>
+    </div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
