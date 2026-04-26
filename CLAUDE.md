@@ -105,3 +105,25 @@ bun --hot ./index.ts
 ```
 
 For more information, read the Bun API docs in `node_modules/bun-types/docs/**.md`.
+
+## Mobile-First Game Dev (SmashMine)
+
+This project is a **mobile-first PWA game**. Primary use case is mobile phones and tablets.
+
+### Mobile Touch Requirements
+- ALL touch controls must work on real mobile devices (not just headless browser)
+- Test touch on real device before declaring done
+- Use real device debugging: Chrome DevTools → Device Mode or connect physical phone via USB
+- Verify touch events fire: check console for `[Joystick]` debug messages
+
+### Mobile Performance
+- Target 60fps on mid-range phones (Pixel A-series, iPhone SE)
+- Keep bundle under 150KB gzip
+- Use PWA offline caching
+- Test on slow 3G connection
+
+### Mobile UX Requirements
+- Touch targets minimum 44x44px
+- Prevent accidental browser gestures (back swipe, zoom, refresh)
+- Handle orientation changes
+- Handle notched devices (viewport-fit=cover)
