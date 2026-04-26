@@ -178,6 +178,29 @@ html, body {
 #hud-shards { color: #00ff88; }
 #hud-coins { color: #ffd700; }
 #hud-timer { color: #fff; }
+#lifetime-stats { color: #aaa; font-size: 0.85em; }
+
+.tutorial-toast {
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 2rem;
+  font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+  font-weight: 600;
+  z-index: 15;
+  white-space: nowrap;
+  border: 2px solid #00ff88;
+  animation: toastPop 0.3s ease-out;
+}
+
+@keyframes toastPop {
+  0% { transform: translateX(-50%) scale(0.8); opacity: 0; }
+  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
 
 .action-btn {
   position: absolute;

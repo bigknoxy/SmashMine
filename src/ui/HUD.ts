@@ -32,3 +32,29 @@ export function updateTimer(elapsed: number, limit: number): void {
     }
   }
 }
+
+export function updateLifetime(totalShards: number, totalCoins: number, missions: number): void {
+  const el = document.getElementById('lifetime-stats');
+  if (el) {
+    el.textContent = `⭐${missions} 💎${totalShards} 💰${totalCoins}`;
+  }
+}
+
+let tutorialTimeout: ReturnType<typeof setTimeout> | null = null;
+
+export function showTutorial(message: string, progress: string): void {
+  const el = document.getElementById('tutorial-toast');
+  if (el) {
+    el.textContent = message;
+    el.classList.remove('hidden');
+    if (tutorialTimeout) clearTimeout(tutorialTimeout);
+    tutorialTimeout = setTimeout(() => {
+      el.classList.add('hidden');
+    }, 3000);
+  }
+}
+
+export function hideTutorial(): void {
+  const el = document.getElementById('tutorial-toast');
+  if (el) el.classList.add('hidden');
+}
