@@ -67,6 +67,9 @@ export class Joystick {
     this.container.addEventListener('touchcancel', (e) => this.onTouchEnd(e));
 
     this.container.addEventListener('pointerdown', (e) => this.onPointerDown(e));
+    this.container.addEventListener('pointermove', (e) => this.onPointerMove(e));
+    this.container.addEventListener('pointerup', () => this.onPointerUp());
+    this.container.addEventListener('pointercancel', () => this.onPointerUp());
     
     window.addEventListener('keydown', (e) => this.onKeyDown(e));
     window.addEventListener('keyup', (e) => this.onKeyUp(e));
@@ -145,6 +148,17 @@ export class Joystick {
     
     this.updateKnobVisual(e.clientX, e.clientY);
     this.updateInputValues(e.clientX, e.clientY);
+  }
+
+  private onPointerMove(e: PointerEvent) {
+    if (!this.active) return;
+    this.currentPos = { x: e.clientX, y: e.clientY };
+    this.updateKnobVisual(e.clientX, e.clientY);
+    this.updateInputValues(e.clientX, e.clientY);
+  }
+
+  private onPointerUp() {
+    this.reset();
   }
 
   private updateKnobVisual(touchX: number, touchY: number) {
