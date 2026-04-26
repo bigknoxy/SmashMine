@@ -108,3 +108,48 @@ describe('BlockSpawner', () => {
     expect(hasOre).toBe(true);
   });
 });
+
+describe('SaveSystem', () => {
+  it('stores and retrieves shards', () => {
+    const { SaveSystem } = require('../src/game/SaveSystem.js');
+    const save = new SaveSystem();
+    save.addShards(10);
+    expect(save.getShards()).toBe(10);
+    expect(save.getTotalShards()).toBe(10);
+  });
+
+  it('stores and retrieves coins', () => {
+    const { SaveSystem } = require('../src/game/SaveSystem.js');
+    const save = new SaveSystem();
+    save.addCoins(50);
+    expect(save.getCoins()).toBe(50);
+    expect(save.getTotalCoins()).toBe(50);
+  });
+
+  it('tracks upgrade levels', () => {
+    const { SaveSystem } = require('../src/game/SaveSystem.js');
+    const save = new SaveSystem();
+    expect(save.getUpgradeLevel('chain_break')).toBe(0);
+    save.setUpgradeLevel('chain_break', 2);
+    expect(save.getUpgradeLevel('chain_break')).toBe(2);
+  });
+
+  it('tracks missions completed', () => {
+    const { SaveSystem } = require('../src/game/SaveSystem.js');
+    const save = new SaveSystem();
+    save.incrementMissions();
+    save.incrementMissions();
+    expect(save.getMissionsCompleted()).toBe(2);
+  });
+
+  it('applies prestige bonus', () => {
+    const { SaveSystem } = require('../src/game/SaveSystem.js');
+    const save = new SaveSystem();
+    save.incrementMissions();
+    save.incrementMissions();
+    const before = save.getPrestigeBonus();
+    save.prestige();
+    expect(save.getPrestigeBonus()).toBe(before + 1);
+    expect(save.getShards()).toBe(0);
+  });
+});

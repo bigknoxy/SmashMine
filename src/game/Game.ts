@@ -17,6 +17,8 @@ import { showIntro } from '../ui/MissionIntro.js';
 
 import { MISSIONS } from '../data/missions.js';
 import { Telemetry, telemetry } from './Telemetry.js';
+import { saveSystem } from './SaveSystem.js';
+import { TutorialManager } from './TutorialManager.js';
 
 export class Game {
   private renderer: Renderer;
@@ -35,6 +37,7 @@ export class Game {
   private audioEngine: AudioEngine;
   private joystick: Joystick;
   private titleScreen: TitleScreen;
+  private tutorialManager: TutorialManager;
 
   private collectedLoot: { type: LootType; amount: number }[] = [];
   private terrainDirty = false;
@@ -51,6 +54,7 @@ export class Game {
     this.titleScreen = new TitleScreen();
     this.particleSystem = new ParticleSystem(this.renderer.scene);
     this.joystick = new Joystick(this.inputState);
+    this.tutorialManager = new TutorialManager();
   }
 
   start(): void {
@@ -94,7 +98,12 @@ export class Game {
     this.joystick.updateInput();
     this.smashCooldown = Math.max(0, this.smashCooldown - delta);
 
+    const wasMoving = this.inputState.moveX !== 0 || this.inputState.moveY !== 0;
     this.player.update(delta, this.inputState, this.world);
+    const isMoving = this.inputState.moveX !== 0 || this.inputState.moveY !== 0;
+    if (wasMoving || isMoving) {
+      this.tutorialManager.onAction('move');
+    }
 
     if (this.inputState.smash && this.smashCooldown <= 0) {
       this.inputState.smash = false;
@@ -110,9 +119,12 @@ export class Game {
     if (collected.length > 0) {
       this.audioEngine.playPickup();
       this.particleSystem.emitBurst(this.player.getPosition(), '#44ff88');
+      this.tutorialManager.onAction('collect');
     }
     for (const item of collected) {
       this.collectedLoot.push(item);
+      if (item.type === 'power_shards') saveSystem.addShards(item.amount);
+      if (item.type === 'coins') saveSystem.addCoins(item.amount);
     }
 
     const result = this.missionManager.update(delta, collected);
@@ -134,6 +146,15 @@ export class Game {
     HUD.updateShards(progress.shards, this.missionManager.getTargetShards());
     HUD.updateCoins(progress.coins);
     HUD.updateTimer(progress.elapsed, this.missionManager.getTimeLimit());
+    HUD.updateLifetime(
+      saveSystem.getTotalShards(),
+      saveSystem.getTotalCoins(),
+      saveSystem.getMissionsCompleted()
+    );
+
+    if (this.tutorialManager.isActive()) {
+      HUD.showTutorial(this.tutorialManager.message(), this.tutorialManager.progress());
+    }
 
     this.renderer.setPlayerPos(this.player.getPosition(), delta);
     this.renderer.updatePlayerMesh(this.player.getPosition());
@@ -143,6 +164,8 @@ export class Game {
     const pos = this.player.getPosition();
     const target = this.findSmashTarget(pos);
     if (!target) return;
+
+    this.tutorialManager.onAction('smash');
 
     const broken = this.smashSystem.smash(this.world, target, this.player);
     if (broken && broken.length > 0) {
@@ -212,6 +235,9 @@ export class Game {
     this.audioEngine.playMissionComplete();
     this.gameState = GameState.MISSION_COMPLETE;
     HUD.hide();
+
+    saveSystem.incrementMissions();
+    if (saveSystem.needsSave()) saveSystem.save();
 
     // Hide action buttons
     const smashBtn = document.getElementById('smash-btn');
