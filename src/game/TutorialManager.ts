@@ -12,34 +12,28 @@ export interface TutorialStep {
 export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'welcome',
-    message: 'Welcome to SmashMine! 💎',
+    message: 'Tap to START',
     trigger: 'manual',
   },
   {
     id: 'move',
-    message: 'Use on-screen joystick to MOVE around',
+    message: 'Swipe to MOVE',
     highlight: 'joystick-zone',
     trigger: 'move',
   },
   {
     id: 'smash',
-    message: 'Tap blocks or press SPACE to SMASH them!',
+    message: 'TAP to SMASH!',
     trigger: 'smash',
   },
   {
     id: 'collect',
-    message: 'Walk near loot to collect it! 📦',
+    message: 'Collect LOOT! 📦',
     trigger: 'collect',
   },
   {
-    id: 'jump',
-    message: 'Press UP or W to JUMP!',
-    highlight: 'jump-btn',
-    trigger: 'jump',
-  },
-  {
     id: 'goal',
-    message: 'Collect 25 Power Shards before time runs out! ⏱️',
+    message: 'Get 25 💎 Shards! ⏱️',
     trigger: 'timer',
   },
 ];

@@ -48,19 +48,20 @@ export class Joystick {
   }
 
   private init() {
-    this.container.style.cssText = `
-      position: absolute;
-      left: 0;
-      bottom: 0;
-      width: 50%;
-      height: 60%;
-      z-index: 6;
-      touch-action: none;
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
-    `;
-
+    Object.assign(this.container.style, {
+      position: 'absolute',
+      left: '0',
+      bottom: '0',
+      width: '50%',
+      height: '60%',
+      zIndex: '6',
+      touchAction: 'none',
+      webkitTouchCallout: 'none',
+      webkitUserSelect: 'none',
+      userSelect: 'none',
+      pointerEvents: 'auto'
+    });
+    
     this.container.addEventListener('touchstart', (e) => this.onTouchStart(e), { passive: false });
     this.container.addEventListener('touchmove', (e) => this.onTouchMove(e), { passive: false });
     this.container.addEventListener('touchend', (e) => this.onTouchEnd(e));
@@ -133,6 +134,7 @@ export class Joystick {
   }
 
   private onPointerDown(e: PointerEvent) {
+    console.log('[Joystick] pointerdown', e.clientX, e.clientY, e.pointerType);
     if (this.active) return;
     
     this.touchId = e.pointerId;
