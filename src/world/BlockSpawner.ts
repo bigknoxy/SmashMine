@@ -79,13 +79,33 @@ export function generateQuarry(world: World, missionId: string): void {
   // Surprise reward room at y = size.y * 0.6
   // (keep the existing surprise room code — it's good)
 
-  // Make sure player start area at (8, top, 8) is clear
+  // Make sure player start area at (8, top, 8) is clear - EXPANDED to 5x5 for movement room
   const startX = Math.floor(size.x / 2);
   const startZ = Math.floor(size.z / 2);
-  for (let dx = -1; dx <= 1; dx++)
-    for (let dz = -1; dz <= 1; dz++)
+  const clearRadius = 2;  // 5x5 area (x: 6-10, z: 6-10)
+  for (let dx = -clearRadius; dx <= clearRadius; dx++)
+    for (let dz = -clearRadius; dz <= clearRadius; dz++)
       for (let y = 1; y < size.y - 1; y++)
         world.setBlock(vec3(startX + dx, y, startZ + dz), 'air');
+
+  // GUARANTEED smashable blocks at the boundary of the spawn area
+  // These areore clusters player can immediately smash to start collecting shards
+  const guaranteedOres = [
+    vec3(startX - clearRadius - 1, 1, startZ),      // left
+    vec3(startX + clearRadius + 1, 1, startZ),     // right
+    vec3(startX, 1, startZ - clearRadius - 1),  // front
+    vec3(startX, 1, startZ + clearRadius + 1),    // back
+    vec3(startX - clearRadius - 1, 2, startZ),      // left higher
+    vec3(startX + clearRadius + 1, 2, startZ),  // right higher
+    vec3(startX, 2, startZ - clearRadius - 1),   // front higher
+    vec3(startX, 2, startZ + clearRadius + 1),    // back higher
+  ];
+  for (const pos of guaranteedOres) {
+    if (world.isInside(pos)) {
+      const oreType: BlockType = rand() < 0.5 ? 'shard_cluster' : rand() < 0.6 ? 'copper_ore' : 'blast_crystal';
+      world.setBlock(pos, oreType);
+    }
+  }
 
   // Top layer: ceiling (optional, partial cover)
   for (let x = 2; x < size.x - 2; x++)

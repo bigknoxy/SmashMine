@@ -37,13 +37,13 @@ export class Player {
     const newPos = { ...this.position };
 
     newPos.x += this.velocity.x * delta;
-    if (this.collides(newPos, world)) { newPos.x = this.position.x; this.velocity.x = 0; }
+    if (this.collidesHorizontal(newPos, world)) { newPos.x = this.position.x; this.velocity.x = 0; }
 
     newPos.z += this.velocity.z * delta;
-    if (this.collides(newPos, world)) { newPos.z = this.position.z; this.velocity.z = 0; }
+    if (this.collidesHorizontal(newPos, world)) { newPos.z = this.position.z; this.velocity.z = 0; }
 
     newPos.y += this.velocity.y * delta;
-    if (this.collides(newPos, world)) {
+    if (this.collidesVertical(newPos, world)) {
       if (this.velocity.y < 0) {
         this.onGround = true;
         newPos.y = Math.ceil(newPos.y - Player.HEIGHT) + Player.HEIGHT;
@@ -66,6 +66,46 @@ export class Player {
   getPosition(): Vec3 { return { ...this.position }; }
 
   private collides(pos: Vec3, world: World): boolean {
+    const hw = Player.WIDTH / 2;
+    const minX = Math.floor(pos.x - hw);
+    const maxX = Math.floor(pos.x + hw);
+    const minY = Math.floor(pos.y - Player.HEIGHT);
+    const maxY = Math.floor(pos.y);
+    const minZ = Math.floor(pos.z - hw);
+    const maxZ = Math.floor(pos.z + hw);
+
+    for (let x = minX; x <= maxX; x++) {
+      for (let y = minY; y <= maxY; y++) {
+        for (let z = minZ; z <= maxZ; z++) {
+          const block = world.getBlock(x, y, z);
+          if (block !== 'air') return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private collidesHorizontal(pos: Vec3, world: World): boolean {
+    const hw = Player.WIDTH / 2;
+    const minX = Math.floor(pos.x - hw);
+    const maxX = Math.floor(pos.x + hw);
+    const minY = Math.floor(pos.y - Player.HEIGHT + 0.05);
+    const maxY = Math.floor(pos.y);
+    const minZ = Math.floor(pos.z - hw);
+    const maxZ = Math.floor(pos.z + hw);
+
+    for (let x = minX; x <= maxX; x++) {
+      for (let y = minY; y <= maxY; y++) {
+        for (let z = minZ; z <= maxZ; z++) {
+          const block = world.getBlock(x, y, z);
+          if (block !== 'air') return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private collidesVertical(pos: Vec3, world: World): boolean {
     const hw = Player.WIDTH / 2;
     const minX = Math.floor(pos.x - hw);
     const maxX = Math.floor(pos.x + hw);

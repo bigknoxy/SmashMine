@@ -163,10 +163,11 @@ export class Game {
     const px = Math.round(pos.x);
     const py = Math.round(pos.y);
     const pz = Math.round(pos.z);
+    const range = 2;
 
-    for (let y = py; y >= py - 2; y--) {
-      for (let x = px - 1; x <= px + 1; x++) {
-        for (let z = pz - 1; z <= pz + 1; z++) {
+    for (let y = py + 1; y >= py - range; y--) {
+      for (let x = px - range; x <= px + range; x++) {
+        for (let z = pz - range; z <= pz + range; z++) {
           if (!this.world.isInside(x, y, z)) continue;
           const block = this.world.getBlock(x, y, z);
           if (block !== 'air' && block !== 'bedrock') {
@@ -234,6 +235,13 @@ export class Game {
     telemetry.upgradesPicked++;
     RewardScreen.hide();
     this.startMission();
+  }
+
+  onCanvasClick(e: PointerEvent): void {
+    if (this.gameState !== GameState.PLAYING) return;
+    if (this.smashCooldown > 0) return;
+    
+    this.inputState.smash = true;
   }
 
   pause(): void { this.paused = true; }

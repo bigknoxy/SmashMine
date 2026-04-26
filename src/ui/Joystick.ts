@@ -121,13 +121,13 @@ export class Joystick {
       case 'ArrowLeft':
       case 'KeyD':
       case 'ArrowRight':
-        if (this.heldKeys.size === 0) this.inputState.moveX = 0;
+        this.inputState.moveX = 0;
         break;
       case 'KeyW':
       case 'ArrowUp':
       case 'KeyS':
       case 'ArrowDown':
-        if (this.heldKeys.size === 0) this.inputState.moveY = 0;
+        this.inputState.moveY = 0;
         break;
       case 'Space':
         this.inputState.jump = false;
