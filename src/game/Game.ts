@@ -218,11 +218,8 @@ export class Game {
     this.titleScreen.hide();
     HUD.show();
 
-    // Show action buttons
-    const smashBtn = document.getElementById('smash-btn');
-    if (smashBtn) smashBtn.classList.remove('hidden');
-    const joyZone = document.getElementById('joystick-zone');
-    if (joyZone) joyZone.classList.remove('hidden');
+    document.getElementById('smash-btn')?.classList.remove('hidden');
+    document.getElementById('joystick-zone')?.classList.remove('hidden');
 
     this.gameState = GameState.MISSION_INTRO;
     showIntro(mission).then(() => {
@@ -239,11 +236,8 @@ export class Game {
     saveSystem.incrementMissions();
     if (saveSystem.needsSave()) saveSystem.save();
 
-    // Hide action buttons
-    const smashBtn = document.getElementById('smash-btn');
-    if (smashBtn) smashBtn.classList.add('hidden');
-    const joyZone = document.getElementById('joystick-zone');
-    if (joyZone) joyZone.classList.add('hidden');
+    document.getElementById('smash-btn')?.classList.add('hidden');
+    document.getElementById('joystick-zone')?.classList.add('hidden');
 
     const progress = this.missionManager.getProgress();
     RewardScreen.show(progress, (upgradeId: UpgradeId) => {
@@ -271,5 +265,5 @@ export class Game {
   }
 
   pause(): void { this.paused = true; }
-  resume(): void { this.paused = false; }
+  resume(): void { this.paused = false; this.lastTime = performance.now(); }
 }

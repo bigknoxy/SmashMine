@@ -29,8 +29,11 @@ export class CameraController {
 
     camera.position.set(this.cameraPos.x, this.cameraPos.y, this.cameraPos.z);
     camera.lookAt(playerPos.x, playerPos.y, playerPos.z);
-    camera.fov = 60;
-    camera.updateProjectionMatrix();
+    if (!this.initialized) {
+      camera.fov = 60;
+      camera.updateProjectionMatrix();
+      this.initialized = true;
+    }
   }
 
   addShake(intensity: number): void {

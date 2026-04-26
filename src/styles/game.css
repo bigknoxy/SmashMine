@@ -37,12 +37,13 @@ html, body {
   position: absolute;
   left: 0;
   bottom: 0;
-  width: 40%;
-  height: 50%;
-  z-index: 6;
-  pointer-events: auto;
+  width: 50%;
+  height: 60%;
+  z-index: 100;
   touch-action: none;
   -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 #joystick-zone::after {

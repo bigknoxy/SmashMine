@@ -1,5 +1,9 @@
 import { InputState } from '../game/types.js';
 
+const KNOB_SIZE_PX = 50;
+const KNOB_MIN_SIZE_PX = 40;
+const KNOB_GROW_PX = 20;
+
 export class Joystick {
   private container: HTMLElement;
   private knob!: HTMLElement;
@@ -18,9 +22,6 @@ export class Joystick {
     if (this.container) {
       this.knob = this.createKnob();
       this.init();
-      console.log('[Joystick] Initialized (pointer-events only)');
-    } else {
-      console.error('[Joystick] joystick-zone NOT FOUND');
     }
   }
 
@@ -29,8 +30,8 @@ export class Joystick {
     knob.id = 'joystick-knob';
     knob.style.cssText = `
       position: absolute;
-      width: 50px;
-      height: 50px;
+      width: ${KNOB_SIZE_PX}px;
+      height: ${KNOB_SIZE_PX}px;
       background: rgba(0, 255, 136, 0.6);
       border: 3px solid rgba(0, 255, 136, 0.9);
       border-radius: 50%;
@@ -40,27 +41,11 @@ export class Joystick {
       pointer-events: none;
       box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
     `;
-    if (this.container) {
-      this.container.appendChild(knob);
-    }
+    this.container.appendChild(knob);
     return knob;
   }
 
   private init() {
-    Object.assign(this.container.style, {
-      position: 'absolute',
-      left: '0',
-      bottom: '0',
-      width: '50%',
-      height: '60%',
-      zIndex: '100',
-      touchAction: 'none',
-      webkitTouchCallout: 'none',
-      webkitUserSelect: 'none',
-      userSelect: 'none',
-      pointerEvents: 'auto'
-    });
-
     this.container.addEventListener('pointerdown', (e) => this.onPointerDown(e));
     this.container.addEventListener('pointermove', (e) => this.onPointerMove(e));
     this.container.addEventListener('pointerup', () => this.onPointerUp());
@@ -72,39 +57,26 @@ export class Joystick {
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) this.forceReset();
     });
-    window.addEventListener('blur', () => {
-      this.forceReset();
-    });
+    window.addEventListener('blur', () => this.forceReset());
 
-    const smashBtn = document.getElementById('smash-btn');
-    if (smashBtn) {
-      smashBtn.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        this.inputState.smash = true;
-      });
-      smashBtn.addEventListener('pointerup', () => { this.inputState.smash = false; });
-      smashBtn.addEventListener('pointercancel', () => { this.inputState.smash = false; });
-      smashBtn.addEventListener('pointerleave', () => { this.inputState.smash = false; });
-    }
+    this.bindActionButton('smash-btn', 'smash');
+    this.bindActionButton('special-btn', 'special');
+  }
 
-    const specialBtn = document.getElementById('special-btn');
-    if (specialBtn) {
-      specialBtn.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        this.inputState.special = true;
-      });
-      specialBtn.addEventListener('pointerup', () => { this.inputState.special = false; });
-      specialBtn.addEventListener('pointercancel', () => { this.inputState.special = false; });
-      specialBtn.addEventListener('pointerleave', () => { this.inputState.special = false; });
-    }
+  private bindActionButton(id: string, key: 'smash' | 'special') {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    const activate = (e: Event) => { e.preventDefault(); this.inputState[key] = true; };
+    const deactivate = () => { this.inputState[key] = false; };
+    btn.addEventListener('pointerdown', activate);
+    btn.addEventListener('pointerup', deactivate);
+    btn.addEventListener('pointercancel', deactivate);
+    btn.addEventListener('pointerleave', deactivate);
   }
 
   private onPointerDown(e: PointerEvent) {
     e.preventDefault();
-
-    if (this.active) {
-      this.reset();
-    }
+    if (this.active) this.reset();
 
     this.pointerId = e.pointerId;
     this.active = true;
@@ -115,11 +87,7 @@ export class Joystick {
       y: rect.top + rect.height / 2
     };
 
-    try {
-      this.container.setPointerCapture(e.pointerId);
-    } catch (_) {
-      // setPointerCapture not supported in this context
-    }
+    try { this.container.setPointerCapture(e.pointerId); } catch {}
 
     this.updateKnobVisual(e.clientX, e.clientY);
     this.updateInputValues(e.clientX, e.clientY);
@@ -128,62 +96,51 @@ export class Joystick {
   private onPointerMove(e: PointerEvent) {
     if (!this.active) return;
     if (this.pointerId !== null && e.pointerId !== this.pointerId) return;
-
-    if (e.buttons === 0) {
-      this.reset();
-      return;
-    }
+    if (e.buttons === 0) { this.reset(); return; }
 
     this.updateKnobVisual(e.clientX, e.clientY);
     this.updateInputValues(e.clientX, e.clientY);
   }
 
-  private onPointerUp() {
-    this.reset();
+  private onPointerUp() { this.reset(); }
+
+  private computeDisplacement(clientX: number, clientY: number) {
+    const dx = clientX - this.startPos.x;
+    const dy = clientY - this.startPos.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const clampedDist = Math.min(dist, this.maxRadius);
+    return { dx, dy, dist, clampedDist };
   }
 
   private updateKnobVisual(clientX: number, clientY: number) {
-    const dx = clientX - this.startPos.x;
-    const dy = clientY - this.startPos.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const clampedDist = Math.min(dist, this.maxRadius);
-
-    let displayX = 0, displayY = 0;
-    if (dist > 0) {
-      displayX = (dx / dist) * clampedDist;
-      displayY = (dy / dist) * clampedDist;
-    }
+    const { dx, dy, dist, clampedDist } = this.computeDisplacement(clientX, clientY);
+    const displayX = dist > 0 ? (dx / dist) * clampedDist : 0;
+    const displayY = dist > 0 ? (dy / dist) * clampedDist : 0;
+    const size = KNOB_MIN_SIZE_PX + (clampedDist / this.maxRadius) * KNOB_GROW_PX;
 
     this.knob.style.transform = `translate(calc(-50% + ${displayX}px), calc(-50% + ${displayY}px))`;
-    this.knob.style.width = `${40 + clampedDist / this.maxRadius * 20}px`;
-    this.knob.style.height = `${40 + clampedDist / this.maxRadius * 20}px`;
+    this.knob.style.width = `${size}px`;
+    this.knob.style.height = `${size}px`;
   }
 
   private updateInputValues(clientX: number, clientY: number) {
-    const dx = clientX - this.startPos.x;
-    const dy = clientY - this.startPos.y;
-
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const clampedDist = Math.min(dist, this.maxRadius);
-
-    let normX = 0, normY = 0;
-    if (dist > 0.1) {
-      normX = (dx / dist) * (clampedDist / this.maxRadius);
-      normY = (dy / dist) * (clampedDist / this.maxRadius);
-    }
-
-    this.inputState.moveX = parseFloat(normX.toFixed(2));
-    this.inputState.moveY = parseFloat(normY.toFixed(2));
+    const { dx, dy, dist, clampedDist } = this.computeDisplacement(clientX, clientY);
+    const normalizer = dist > 0.1 ? clampedDist / this.maxRadius : 0;
+    this.inputState.moveX = parseFloat(((dx / (dist || 1)) * normalizer).toFixed(2));
+    this.inputState.moveY = parseFloat(((dy / (dist || 1)) * normalizer).toFixed(2));
   }
 
   private reset() {
+    if (this.pointerId !== null) {
+      try { this.container.releasePointerCapture(this.pointerId); } catch {}
+    }
     this.active = false;
     this.pointerId = null;
     this.inputState.moveX = 0;
     this.inputState.moveY = 0;
     this.knob.style.transform = 'translate(-50%, -50%)';
-    this.knob.style.width = '50px';
-    this.knob.style.height = '50px';
+    this.knob.style.width = `${KNOB_SIZE_PX}px`;
+    this.knob.style.height = `${KNOB_SIZE_PX}px`;
   }
 
   private forceReset() {
@@ -215,10 +172,7 @@ export class Joystick {
         this.inputState.moveY = 1;
         break;
       case 'Space':
-        if (!this.smashQueued) {
-          this.inputState.smash = true;
-          this.smashQueued = true;
-        }
+        if (!this.smashQueued) { this.inputState.smash = true; this.smashQueued = true; }
         this.inputState.jump = true;
         break;
       case 'KeyE':
@@ -266,8 +220,6 @@ export class Joystick {
       this.inputState.moveY = 0;
     }
 
-    if (this.smashQueued) {
-      this.smashQueued = false;
-    }
+    if (this.smashQueued) this.smashQueued = false;
   }
 }

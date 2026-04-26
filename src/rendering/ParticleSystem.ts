@@ -123,8 +123,14 @@ export class ParticleSystem {
       aliveCount++;
     }
 
-    // Remove dead particles
-    this.particles = this.particles.filter(p => p.age < p.maxAge);
+    // Remove dead particles in-place
+    let writeIdx = 0;
+    for (let i = 0; i < this.particles.length; i++) {
+      if (this.particles[i].age < this.particles[i].maxAge) {
+        this.particles[writeIdx++] = this.particles[i];
+      }
+    }
+    this.particles.length = writeIdx;
 
     (this.geometry.attributes.position as Float32BufferAttribute).needsUpdate = true;
     (this.geometry.attributes.color as Float32BufferAttribute).needsUpdate = true;

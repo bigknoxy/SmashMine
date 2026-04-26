@@ -16,7 +16,6 @@ document.addEventListener('visibilitychange', () => {
   else game.resume();
 });
 
-canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 document.body.addEventListener('contextmenu', (e) => e.preventDefault());
 
 canvas.width = window.innerWidth;
