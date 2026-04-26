@@ -221,6 +221,14 @@ html, body {
   transform: scale(0.9);
 }
 
+.action-btn {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
 #smash-btn {
   right: 1.5rem;
   bottom: 1.5rem;
