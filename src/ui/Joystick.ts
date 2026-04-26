@@ -14,10 +14,14 @@ export class Joystick {
   private heldKeys = new Set<string>();
   
   constructor(inputState: InputState) {
-    this.container = document.getElementById('joystick-zone') as HTMLElement;
-    this.knob = this.createKnob();
     this.inputState = inputState;
-    this.init();
+    this.container = document.getElementById('joystick-zone') as HTMLElement;
+    if (this.container) {
+      this.knob = this.createKnob();
+      this.init();
+    } else {
+      console.warn('Joystick: joystick-zone not found');
+    }
   }
 
   private createKnob(): HTMLElement {
