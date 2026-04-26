@@ -2,7 +2,7 @@ import { InputState } from '../game/types.js';
 
 export class Joystick {
   private container: HTMLElement;
-  private knob: HTMLElement;
+  private knob!: HTMLElement;
   private inputState: InputState;
 
   private active = false;
