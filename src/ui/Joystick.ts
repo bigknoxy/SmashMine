@@ -19,8 +19,9 @@ export class Joystick {
     if (this.container) {
       this.knob = this.createKnob();
       this.init();
+      console.log('[Joystick] ✅ Fully initialized');
     } else {
-      console.warn('Joystick: joystick-zone not found');
+      console.error('[Joystick] ❌ joystick-zone NOT FOUND at constructor time');
     }
   }
 
@@ -54,7 +55,7 @@ export class Joystick {
       bottom: '0',
       width: '50%',
       height: '60%',
-      zIndex: '6',
+      zIndex: '100',
       touchAction: 'none',
       webkitTouchCallout: 'none',
       webkitUserSelect: 'none',
@@ -134,7 +135,6 @@ export class Joystick {
   }
 
   private onPointerDown(e: PointerEvent) {
-    console.log('[Joystick] pointerdown', e.clientX, e.clientY, e.pointerType);
     if (this.active) return;
     
     this.touchId = e.pointerId;
