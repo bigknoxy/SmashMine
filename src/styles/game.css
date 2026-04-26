@@ -13,6 +13,7 @@ html, body {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+  overscroll-behavior: none;
 }
 
 #game-container {
@@ -41,6 +42,7 @@ html, body {
   z-index: 6;
   pointer-events: auto;
   touch-action: none;
+  -webkit-touch-callout: none;
 }
 
 #joystick-zone::after {
@@ -122,6 +124,7 @@ html, body {
   cursor: pointer;
   animation: btnPulse 1.5s ease-in-out infinite;
   transition: transform 0.1s;
+  touch-action: manipulation;
 }
 
 #start-btn:active {
@@ -210,19 +213,14 @@ html, body {
   justify-content: center;
   cursor: pointer;
   touch-action: none;
-  transition: transform 0.08s;
-}
-
-.action-btn:active {
-  transform: scale(0.9);
-}
-
-.action-btn {
-  touch-action: none;
   -webkit-touch-callout: none;
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+.action-btn:active {
+  transform: scale(0.9);
 }
 
 #smash-btn {
@@ -242,17 +240,6 @@ html, body {
   background: radial-gradient(circle, #ffd700, #ff8800);
   color: #1a1a2e;
   font-size: clamp(0.8rem, 2.5vw, 1.1rem);
-}
-
-#joystick-zone {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 40%;
-  height: 50%;
-  z-index: 6;
-  pointer-events: auto;
-  touch-action: none;
 }
 
 #reward-screen {
@@ -350,6 +337,7 @@ html, body {
   border-radius: 2rem;
   cursor: pointer;
   transition: transform 0.1s;
+  touch-action: manipulation;
 }
 
 #replay-btn:active {
