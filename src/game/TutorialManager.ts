@@ -11,30 +11,20 @@ export interface TutorialStep {
 
 export const TUTORIAL_STEPS: TutorialStep[] = [
   {
-    id: 'welcome',
-    message: 'Tap to START',
-    trigger: 'manual',
-  },
-  {
     id: 'move',
-    message: 'Swipe to MOVE',
+    message: 'Swipe here to MOVE',
     highlight: 'joystick-zone',
     trigger: 'move',
   },
   {
     id: 'smash',
-    message: 'TAP to SMASH!',
+    message: 'TAP to SMASH blocks!',
     trigger: 'smash',
   },
   {
     id: 'collect',
-    message: 'Collect LOOT! 📦',
+    message: 'Collect those Shards! 💎',
     trigger: 'collect',
-  },
-  {
-    id: 'goal',
-    message: 'Get 25 💎 Shards! ⏱️',
-    trigger: 'timer',
   },
 ];
 

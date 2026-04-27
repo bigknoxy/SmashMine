@@ -13,8 +13,8 @@ export default defineConfig({
         description: 'Smash blocks, collect loot, get OP fast!',
         theme_color: '#1a1a2e',
         background_color: '#1a1a2e',
-        display: 'fullscreen',
-        orientation: 'landscape',
+        display: 'standalone',
+        orientation: 'any',
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },

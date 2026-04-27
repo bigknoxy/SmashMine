@@ -157,7 +157,48 @@ export class Game {
     }
 
     this.renderer.setPlayerPos(this.player.getPosition(), delta);
-    this.renderer.updatePlayerMesh(this.player.getPosition());
+    this.renderer.updatePlayerMesh(this.player.getPosition(), { x: this.inputState.moveX, y: this.inputState.moveY }, delta);
+    
+    // Update target highlighting
+    const target = this.findSmashTarget(this.player.getPosition());
+    this.renderer.setTargetBlock(target, this.smashCooldown > 0);
+  }
+
+  private findSmashTarget(pos: Vec3): Vec3 | null {
+    if (!this.world) return null;
+
+    const range = 3.5;
+    let closestBlock: Vec3 | null = null;
+    let minDist = range;
+
+    const px = Math.floor(pos.x);
+    const py = Math.floor(pos.y - 0.9);
+    const pz = Math.floor(pos.z);
+
+    for (let x = -4; x <= 4; x++) {
+      for (let y = -3; y <= 3; y++) {
+        for (let z = -4; z <= 4; z++) {
+          const bx = px + x;
+          const by = py + y;
+          const bz = pz + z;
+          
+          if (!this.world.isInside(bx, by, bz)) continue;
+
+          const block = this.world.getBlock(bx, by, bz);
+          if (block !== 'air' && block !== 'bedrock') {
+            const dx = (bx + 0.5) - pos.x;
+            const dy = (by + 0.5) - (pos.y - 0.9);
+            const dz = (bz + 0.5) - pos.z;
+            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (dist < minDist) {
+              minDist = dist;
+              closestBlock = { x: bx, y: by, z: bz };
+            }
+          }
+        }
+      }
+    }
+    return closestBlock;
   }
 
   private handleSmash(): void {
@@ -180,26 +221,6 @@ export class Game {
       this.terrainDirty = true;
       telemetry.lootCollected += broken.length;
     }
-  }
-
-  private findSmashTarget(pos: { x: number; y: number; z: number }): { x: number; y: number; z: number } | null {
-    const px = Math.round(pos.x);
-    const py = Math.round(pos.y);
-    const pz = Math.round(pos.z);
-    const range = 2;
-
-    for (let y = py + 1; y >= py - range; y--) {
-      for (let x = px - range; x <= px + range; x++) {
-        for (let z = pz - range; z <= pz + range; z++) {
-          if (!this.world.isInside(x, y, z)) continue;
-          const block = this.world.getBlock(x, y, z);
-          if (block !== 'air' && block !== 'bedrock') {
-            return { x, y, z };
-          }
-        }
-      }
-    }
-    return null;
   }
 
   startMission(): void {
@@ -262,6 +283,10 @@ export class Game {
     if (this.smashCooldown > 0) return;
     
     this.inputState.smash = true;
+  }
+
+  resize(width: number, height: number): void {
+    this.renderer.resize(width, height);
   }
 
   pause(): void { this.paused = true; }

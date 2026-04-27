@@ -9,6 +9,7 @@ const game = new Game(canvas);
 window.addEventListener('resize', () => {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
+  game.resize(window.innerWidth, window.innerHeight);
 });
 
 document.addEventListener('visibilitychange', () => {

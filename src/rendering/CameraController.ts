@@ -13,6 +13,20 @@ export class CameraController {
     const targetY = playerPos.y + this.targetOffset.y;
     const targetZ = playerPos.z + this.targetOffset.z;
 
+    // Adjust FOV and Zoom for portrait mode
+    if (camera.aspect < 1) {
+      camera.fov = 75;
+      this.targetOffset.x = 3;
+      this.targetOffset.y = 6;
+      this.targetOffset.z = 8;
+    } else {
+      camera.fov = 60;
+      this.targetOffset.x = 4;
+      this.targetOffset.y = 8;
+      this.targetOffset.z = 10;
+    }
+    camera.updateProjectionMatrix();
+
     if (this.shakeIntensity > 0) {
       const shakeX = (Math.random() - 0.5) * this.shakeIntensity;
       const shakeY = (Math.random() - 0.5) * this.shakeIntensity;
@@ -29,11 +43,6 @@ export class CameraController {
 
     camera.position.set(this.cameraPos.x, this.cameraPos.y, this.cameraPos.z);
     camera.lookAt(playerPos.x, playerPos.y, playerPos.z);
-    if (!this.initialized) {
-      camera.fov = 60;
-      camera.updateProjectionMatrix();
-      this.initialized = true;
-    }
   }
 
   addShake(intensity: number): void {

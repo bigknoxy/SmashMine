@@ -1,4 +1,5 @@
 import { InputState } from '../game/types.js';
+import { TutorialManager } from '../game/TutorialManager.js';
 
 const KNOB_SIZE_PX = 50;
 const KNOB_MIN_SIZE_PX = 40;
@@ -16,33 +17,16 @@ export class Joystick {
   private smashQueued = false;
   private heldKeys = new Set<string>();
 
+  private base: HTMLElement;
+
   constructor(inputState: InputState) {
     this.inputState = inputState;
     this.container = document.getElementById('joystick-zone') as HTMLElement;
-    if (this.container) {
-      this.knob = this.createKnob();
+    this.base = document.getElementById('joystick-base') as HTMLElement;
+    this.knob = document.getElementById('joystick-knob') as HTMLElement;
+    if (this.container && this.base && this.knob) {
       this.init();
     }
-  }
-
-  private createKnob(): HTMLElement {
-    const knob = document.createElement('div');
-    knob.id = 'joystick-knob';
-    knob.style.cssText = `
-      position: absolute;
-      width: ${KNOB_SIZE_PX}px;
-      height: ${KNOB_SIZE_PX}px;
-      background: rgba(0, 255, 136, 0.6);
-      border: 3px solid rgba(0, 255, 136, 0.9);
-      border-radius: 50%;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
-    `;
-    this.container.appendChild(knob);
-    return knob;
   }
 
   private init() {
@@ -80,12 +64,19 @@ export class Joystick {
 
     this.pointerId = e.pointerId;
     this.active = true;
+    this.container.classList.add('active');
 
+    // Dynamic joystick: center base on touch point
     const rect = this.container.getBoundingClientRect();
-    this.startPos = {
-      x: rect.left + rect.width / 2,
-      y: rect.top + rect.height / 2
-    };
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    this.startPos = { x: e.clientX, y: e.clientY };
+    
+    this.base.style.left = `${x}px`;
+    this.base.style.top = `${y}px`;
+    this.knob.style.left = `${x}px`;
+    this.knob.style.top = `${y}px`;
 
     try { this.container.setPointerCapture(e.pointerId); } catch {}
 
@@ -135,6 +126,7 @@ export class Joystick {
       try { this.container.releasePointerCapture(this.pointerId); } catch {}
     }
     this.active = false;
+    this.container.classList.remove('active');
     this.pointerId = null;
     this.inputState.moveX = 0;
     this.inputState.moveY = 0;
