@@ -12,14 +12,31 @@
   <link rel="icon" href="favicon.ico" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180" />
   <title>SmashMine</title>
+  <style>
+    body { background-color: #1a1a2e; margin: 0; overflow: hidden; }
+  </style>
 </head>
 <body>
   <div id="game-container">
     <canvas id="game-canvas"></canvas>
     <div id="title-screen">
       <h1 class="game-title">SmashMine</h1>
-      <button id="start-btn">TAP TO START</button>
+      <div class="title-buttons">
+        <button id="start-btn">TAP TO START</button>
+        <button id="shop-btn" class="mission-action-btn secondary">UPGRADES</button>
+      </div>
       <div id="version-tag"></div>
+    </div>
+    <div id="shop-screen" class="overlay hidden">
+      <h2>Permanent Upgrades</h2>
+      <div id="shop-coins">Coins: <span id="shop-coin-count">0</span></div>
+      <div id="shop-list"></div>
+      <button id="shop-back-btn" class="mission-action-btn secondary">BACK</button>
+    </div>
+    <div id="mission-select" class="overlay hidden">
+      <h2>Select Mission</h2>
+      <div id="mission-list"></div>
+      <button id="mission-back-btn" class="mission-action-btn secondary">BACK</button>
     </div>
     <div id="mission-intro" class="overlay hidden">
       <h2 id="mission-title"></h2>
@@ -43,13 +60,19 @@
       <div id="loot-summary" class="loot-summary"></div>
       <h3>Choose an Upgrade</h3>
       <div id="upgrade-cards"></div>
-      <button id="replay-btn" class="mission-action-btn">PLAY AGAIN</button>
+      <div class="button-row">
+        <button id="home-btn-success" class="mission-action-btn secondary">HOME</button>
+        <button id="replay-btn" class="mission-action-btn">PLAY AGAIN</button>
+      </div>
     </div>
     <div id="failed-screen" class="overlay mission-overlay hidden">
       <h2>MISSION FAILED</h2>
       <p id="failed-message">Time's up! Try again.</p>
       <div id="failed-loot-summary" class="loot-summary"></div>
-      <button id="retry-btn" class="mission-action-btn">RETRY</button>
+      <div class="button-row">
+        <button id="home-btn-failed" class="mission-action-btn secondary">HOME</button>
+        <button id="retry-btn" class="mission-action-btn">RETRY</button>
+      </div>
     </div>
   </div>
   <script type="module" src="src/main.ts"></script>

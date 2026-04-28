@@ -1,10 +1,11 @@
-import type { UpgradeId, LootType } from './types.js';
+import type { UpgradeId, LootType, ShopItemId } from './types.js';
 
 export interface SaveData {
   version: number;
   shards: number;
   coins: number;
   upgrades: Record<UpgradeId, number>;
+  shopItems: Record<ShopItemId, number>;
   missionsCompleted: number;
   totalShardsCollected: number;
   totalCoinsCollected: number;
@@ -28,6 +29,11 @@ const defaultData: SaveData = {
     treasure_vision: 0,
     op_mode: 0,
   },
+  shopItems: {
+    permanent_speed: 0,
+    permanent_range: 0,
+    permanent_power: 0,
+  },
   missionsCompleted: 0,
   totalShardsCollected: 0,
   totalCoinsCollected: 0,
@@ -50,7 +56,13 @@ export class SaveSystem {
       if (stored) {
         const parsed = JSON.parse(stored) as SaveData;
         if (parsed.version === CURRENT_VERSION) {
-          this.data = parsed;
+          // Merge with defaults to handle new fields
+          this.data = {
+            ...defaultData,
+            ...parsed,
+            upgrades: { ...defaultData.upgrades, ...parsed.upgrades },
+            shopItems: { ...defaultData.shopItems, ...parsed.shopItems },
+          };
         }
       }
     } catch (e) {
@@ -86,6 +98,8 @@ export class SaveSystem {
     this.data.prestigeLevel += 1;
     this.data.shards = 0;
     this.data.coins = 0;
+    // Reset mission progress but KEEP shopItems and prestige bonuses
+    this.data.missionsCompleted = 0;
     this.data.lastPlayed = Date.now();
     this.save();
   }
@@ -109,8 +123,10 @@ export class SaveSystem {
   }
 
   addCoins(amount: number): void {
-    this.data.coins += amount;
-    this.data.totalCoinsCollected += amount;
+    const prestigeMult = 1 + (this.data.prestigeLevel * 0.2);
+    const finalAmount = Math.round(amount * prestigeMult);
+    this.data.coins += finalAmount;
+    this.data.totalCoinsCollected += finalAmount;
     this.markDirty();
   }
 
@@ -121,6 +137,19 @@ export class SaveSystem {
   setUpgradeLevel(id: UpgradeId, level: number): void {
     this.data.upgrades[id] = level;
     this.markDirty();
+  }
+
+  getShopLevel(id: ShopItemId): number {
+    return this.data.shopItems[id] ?? 0;
+  }
+
+  purchaseShopItem(id: ShopItemId, cost: number): boolean {
+    if (this.data.coins < cost) return false;
+    this.data.coins -= cost;
+    this.data.shopItems[id] = (this.data.shopItems[id] ?? 0) + 1;
+    this.markDirty();
+    this.save();
+    return true;
   }
 
   canUpgrade(id: UpgradeId, maxLevel: number): boolean {

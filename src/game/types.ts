@@ -25,6 +25,11 @@ export type UpgradeId =
   | 'treasure_vision'
   | 'op_mode';
 
+export type ShopItemId =
+  | 'permanent_speed'
+  | 'permanent_range'
+  | 'permanent_power';
+
 export type LootType =
   | 'coins'
   | 'power_shards'

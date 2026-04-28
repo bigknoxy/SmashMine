@@ -1,8 +1,9 @@
 import type { Vec3, InputState, UpgradeId } from './types.js';
 import type { World } from '../world/World.js';
+import { saveSystem } from './SaveSystem.js';
 
 export class Player {
-  private static readonly SPEED = 6;
+  private static readonly BASE_SPEED = 6;
   private static readonly GRAVITY = -18;
   private static readonly JUMP_VEL = 8;
   private static readonly HALF_WIDTH = 0.3; // WIDTH / 2
@@ -19,8 +20,19 @@ export class Player {
     this.onGround = false;
   }
 
+  private getMoveSpeed(): number {
+    const level = saveSystem.getShopLevel('permanent_speed');
+    return Player.BASE_SPEED + level * 0.6;
+  }
+
   hasUpgrade(id: UpgradeId): boolean { return this.upgrades.has(id); }
-  getUpgradeLevel(id: UpgradeId): number { return this.upgrades.get(id) || 0; }
+  getUpgradeLevel(id: UpgradeId): number { 
+    let level = this.upgrades.get(id) || 0;
+    if (id === 'chain_break') {
+      level += saveSystem.getShopLevel('permanent_power');
+    }
+    return level;
+  }
   applyUpgrade(id: UpgradeId): void { this.upgrades.set(id, (this.upgrades.get(id) || 0) + 1); }
 
   resetPosition(): void {
@@ -31,8 +43,9 @@ export class Player {
 
   update(delta: number, input: InputState, world: World): void {
     this.velocity.y += Player.GRAVITY * delta;
-    this.velocity.x = input.moveX * Player.SPEED;
-    this.velocity.z = input.moveY * Player.SPEED;
+    const speed = this.getMoveSpeed();
+    this.velocity.x = input.moveX * speed;
+    this.velocity.z = input.moveY * speed;
 
     const newPos = { ...this.position };
 
