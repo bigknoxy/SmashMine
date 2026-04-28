@@ -56,18 +56,11 @@ export interface LootDrop {
   worldPos: Vec3;
 }
 
-export interface LootTableEntry {
-  type: LootType;
-  min: number;
-  max: number;
-  weight: number;
-}
-
 export interface BlockDef {
   type: BlockType;
   color: string;
   rarity: Rarity;
-  lootTable: LootTableEntry[];
+  lootTable: { type: LootType; min: number; max: number; weight: number }[];
   hp: number;
 }
 

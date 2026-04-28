@@ -1,6 +1,7 @@
 export const telemetry = {
   missionStarted: 0,
   missionCompleted: 0,
+  missionFailed: 0,
   replayCount: 0,
   upgradesPicked: 0,
   lootCollected: 0,

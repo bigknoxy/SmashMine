@@ -5,8 +5,8 @@ export class Player {
   private static readonly SPEED = 6;
   private static readonly GRAVITY = -18;
   private static readonly JUMP_VEL = 8;
-  private static readonly HEIGHT = 1.8;
-  private static readonly WIDTH = 0.6;
+  private static readonly HALF_WIDTH = 0.3; // WIDTH / 2
+  private static readonly EYE_HEIGHT = 1.8;
 
   position: Vec3;
   velocity: Vec3;
@@ -36,24 +36,36 @@ export class Player {
 
     const newPos = { ...this.position };
 
+    // Move X axis
     newPos.x += this.velocity.x * delta;
-    if (this.collidesHorizontal(newPos, world)) { newPos.x = this.position.x; this.velocity.x = 0; }
+    if (this.collidesHorizontal(newPos, world)) {
+      newPos.x = this.position.x;
+      this.velocity.x = 0;
+    }
 
+    // Move Z axis
     newPos.z += this.velocity.z * delta;
-    if (this.collidesHorizontal(newPos, world)) { newPos.z = this.position.z; this.velocity.z = 0; }
+    if (this.collidesHorizontal(newPos, world)) {
+      newPos.z = this.position.z;
+      this.velocity.z = 0;
+    }
 
+    // Move Y axis, then resolve landing
     newPos.y += this.velocity.y * delta;
     if (this.collidesVertical(newPos, world)) {
       if (this.velocity.y < 0) {
         this.onGround = true;
-        newPos.y = Math.ceil(newPos.y - Player.HEIGHT) + Player.HEIGHT;
+        newPos.y = Math.ceil(newPos.y - Player.EYE_HEIGHT) + Player.EYE_HEIGHT;
       }
       this.velocity.y = 0;
     } else {
       this.onGround = false;
     }
 
-    if (newPos.y < -5) { this.resetPosition(); return; }
+    if (newPos.y < -5) {
+      this.resetPosition();
+      return;
+    }
     this.position = newPos;
 
     if (input.jump && this.onGround) {
@@ -65,60 +77,30 @@ export class Player {
 
   getPosition(): Vec3 { return { ...this.position }; }
 
-  private collides(pos: Vec3, world: World): boolean {
-    const hw = Player.WIDTH / 2;
-    const minX = Math.floor(pos.x - hw);
-    const maxX = Math.floor(pos.x + hw);
-    const minY = Math.floor(pos.y - Player.HEIGHT);
-    const maxY = Math.floor(pos.y);
-    const minZ = Math.floor(pos.z - hw);
-    const maxZ = Math.floor(pos.z + hw);
-
-    for (let x = minX; x <= maxX; x++) {
-      for (let y = minY; y <= maxY; y++) {
-        for (let z = minZ; z <= maxZ; z++) {
-          const block = world.getBlock(x, y, z);
-          if (block !== 'air') return true;
-        }
-      }
-    }
-    return false;
-  }
+  // ── Collision helpers ───────────────────────────────────────────────
 
   private collidesHorizontal(pos: Vec3, world: World): boolean {
-    const hw = Player.WIDTH / 2;
-    const minX = Math.floor(pos.x - hw);
-    const maxX = Math.floor(pos.x + hw);
-    const minY = Math.floor(pos.y - Player.HEIGHT + 0.05);
-    const maxY = Math.floor(pos.y);
-    const minZ = Math.floor(pos.z - hw);
-    const maxZ = Math.floor(pos.z + hw);
-
-    for (let x = minX; x <= maxX; x++) {
-      for (let y = minY; y <= maxY; y++) {
-        for (let z = minZ; z <= maxZ; z++) {
-          const block = world.getBlock(x, y, z);
-          if (block !== 'air') return true;
-        }
-      }
-    }
-    return false;
+    return this.sweepAABB(pos, Player.EYE_HEIGHT - 0.05, Player.EYE_HEIGHT, world);
   }
 
   private collidesVertical(pos: Vec3, world: World): boolean {
-    const hw = Player.WIDTH / 2;
+    return this.sweepAABB(pos, Player.EYE_HEIGHT, Player.EYE_HEIGHT, world);
+  }
+
+  /** Sweep the player AABB over a range of Y offsets to check for solid blocks. */
+  private sweepAABB(pos: Vec3, minYOffset: number, maxYOffset: number, world: World): boolean {
+    const hw = Player.HALF_WIDTH;
     const minX = Math.floor(pos.x - hw);
     const maxX = Math.floor(pos.x + hw);
-    const minY = Math.floor(pos.y - Player.HEIGHT);
-    const maxY = Math.floor(pos.y);
+    const minY = Math.floor(pos.y - minYOffset);
+    const maxY = Math.floor(pos.y - maxYOffset + 1);
     const minZ = Math.floor(pos.z - hw);
     const maxZ = Math.floor(pos.z + hw);
 
     for (let x = minX; x <= maxX; x++) {
       for (let y = minY; y <= maxY; y++) {
         for (let z = minZ; z <= maxZ; z++) {
-          const block = world.getBlock(x, y, z);
-          if (block !== 'air') return true;
+          if (world.getBlock(x, y, z) !== 'air') return true;
         }
       }
     }

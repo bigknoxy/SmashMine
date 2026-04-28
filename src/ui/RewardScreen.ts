@@ -1,5 +1,6 @@
 import type { MissionProgress, UpgradeId } from '../game/types.js';
 import { UPGRADES } from '../data/upgrades.js';
+import { renderLootHTML } from './lootRenderer.js';
 
 const REWARD_SCREEN = document.getElementById('reward-screen');
 const LOOT_SUMMARY = document.getElementById('loot-summary');
@@ -14,13 +15,7 @@ export function show(progress: MissionProgress, onUpgrade: (id: UpgradeId) => vo
   if (REWARD_SCREEN) REWARD_SCREEN.classList.remove('hidden');
 
   if (LOOT_SUMMARY) {
-    let html = '';
-    if (progress.loot.power_shards > 0) html += `<div class="loot-item">💎 ${progress.loot.power_shards}</div>`;
-    if (progress.loot.coins > 0) html += `<div class="loot-item">💰 ${progress.loot.coins}</div>`;
-    if (progress.loot.blast_crystals > 0) html += `<div class="loot-item">✨ ${progress.loot.blast_crystals}</div>`;
-    if (progress.loot.lucky_cubes > 0) html += `<div class="loot-item">🎲 ${progress.loot.lucky_cubes}</div>`;
-    if (progress.loot.op_relics > 0) html += `<div class="loot-item">⚡ ${progress.loot.op_relics}</div>`;
-    LOOT_SUMMARY.innerHTML = html;
+    LOOT_SUMMARY.innerHTML = renderLootHTML(progress);
   }
 
   if (UPGRADE_CARDS) {

@@ -6,6 +6,7 @@ if (!canvas) throw new Error('Canvas element not found');
 
 const game = new Game(canvas);
 
+
 window.addEventListener('resize', () => {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
