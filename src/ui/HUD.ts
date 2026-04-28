@@ -25,11 +25,40 @@ export function updateTimer(elapsed: number, limit: number): void {
   const el = document.getElementById('timer-display');
   if (el) {
     el.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    if (elapsed / limit > 0.8) {
+    
+    // Phase 2: Timer tension - Color shifts based on remaining time
+    const ratio = remaining / limit;
+    el.classList.remove('time-warning', 'time-critical', 'time-pulse');
+    
+    if (ratio <= 0.167) { // ≤0:10 (10 seconds = 16.7% of 60)
+      el.classList.add('time-pulse');
+    } else if (ratio <= 0.5) { // ≤0:30 (30 seconds = 50%)
       el.classList.add('time-critical');
-    } else {
-      el.classList.remove('time-critical');
+    } else if (ratio <= 1) { // ≤1:00
+      el.classList.add('time-warning');
     }
+  }
+}
+
+export function showNearMiss(): void {
+  // Phase 2: Timer tension - Near-miss messaging on 24/25 shards
+  const el = document.getElementById('timer-display');
+  if (el && !el.classList.contains('near-miss')) {
+    const msg = document.createElement('span');
+    msg.id = 'near-miss-msg';
+    msg.textContent = 'NEAR MISS!';
+    msg.className = 'near-miss-msg';
+    el.appendChild(msg);
+    el.classList.add('near-miss');
+  }
+}
+
+export function hideNearMiss(): void {
+  const el = document.getElementById('timer-display');
+  if (el) {
+    el.classList.remove('near-miss');
+    const msg = document.getElementById('near-miss-msg');
+    if (msg) msg.remove();
   }
 }
 
@@ -57,4 +86,37 @@ export function showTutorial(message: string, progress: string): void {
 export function hideTutorial(): void {
   const el = document.getElementById('tutorial-toast');
   if (el) el.classList.add('hidden');
+}
+
+// Phase 2: Combo meter - HUD display with scaling animation
+let comboTimeout: ReturnType<typeof setTimeout> | null = null;
+
+export function updateCombo(comboCount: number, comboWindow: number): void {
+  const el = document.getElementById('combo-display');
+  if (!el) return;
+  
+  if (comboCount > 0) {
+    const multiplier = Math.min(1 + comboCount * 0.1, 3.0).toFixed(1);
+    el.textContent = `x${multiplier}`;
+    el.classList.add('combo-active');
+    el.style.transform = 'scale(1.3)';
+    
+    // Reset scale after animation
+    setTimeout(() => {
+      el.style.transform = 'scale(1)';
+    }, 100);
+    
+    // Auto-hide after combo window
+    if (comboTimeout) clearTimeout(comboTimeout);
+    comboTimeout = setTimeout(() => {
+      el.classList.remove('combo-active');
+    }, comboWindow);
+  } else {
+    el.classList.remove('combo-active');
+  }
+}
+
+export function hideCombo(): void {
+  const el = document.getElementById('combo-display');
+  if (el) el.classList.remove('combo-active');
 }

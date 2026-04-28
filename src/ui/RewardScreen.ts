@@ -1,12 +1,14 @@
 import type { MissionProgress, UpgradeId } from '../game/types.js';
 import { UPGRADES } from '../data/upgrades.js';
 import { renderLootHTML } from './lootRenderer.js';
+import { saveSystem } from '../game/SaveSystem.js';
 
 const REWARD_SCREEN = document.getElementById('reward-screen');
 const LOOT_SUMMARY = document.getElementById('loot-summary');
 const UPGRADE_CARDS = document.getElementById('upgrade-cards');
 const REPLAY_BTN = document.getElementById('replay-btn');
 const HOME_BTN = document.getElementById('home-btn-success');
+const STREAK_DISPLAY = document.getElementById('streak-display');
 
 let upgradeCallback: ((upgradeId: UpgradeId) => void) | null = null;
 let replayCallback: (() => void) | null = null;
@@ -18,6 +20,17 @@ export function show(progress: MissionProgress, onUpgrade: (id: UpgradeId) => vo
 
   if (LOOT_SUMMARY) {
     LOOT_SUMMARY.innerHTML = renderLootHTML(progress);
+  }
+
+  // Phase 2: Streak - Show streak counter
+  const streak = saveSystem.getStreak();
+  if (STREAK_DISPLAY) {
+    if (streak >= 2) {
+      STREAK_DISPLAY.textContent = `🔥 ${streak} runs in a row!`;
+      STREAK_DISPLAY.classList.remove('hidden');
+    } else {
+      STREAK_DISPLAY.classList.add('hidden');
+    }
   }
 
   if (UPGRADE_CARDS) {
@@ -32,7 +45,13 @@ export function show(progress: MissionProgress, onUpgrade: (id: UpgradeId) => vo
     }
     UPGRADE_CARDS.innerHTML = cardsHTML;
 
-    UPGRADE_CARDS.querySelectorAll('.upgrade-card').forEach(card => {
+    // Phase 2: One More Hooks - Auto-focus upgrade screen
+    const cards = UPGRADE_CARDS.querySelectorAll('.upgrade-card');
+    if (cards.length > 0) {
+      (cards[0] as HTMLElement).focus();
+    }
+    
+    cards.forEach(card => {
       card.addEventListener('click', () => {
         const id = (card as HTMLElement).dataset.upgrade as UpgradeId;
         if (id && upgradeCallback) upgradeCallback(id);

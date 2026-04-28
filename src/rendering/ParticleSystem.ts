@@ -63,7 +63,8 @@ export class ParticleSystem {
   }
 
   emitBurst(pos: { x: number; y: number; z: number }, color: string = '#ffaa00'): void {
-    this.emit({ pos, count: 10, color, speed: 3, lifetime: 0.5, size: 0.5, spread: 1, gravity: 0.5 });
+    // Phase 2: Smash Juice - Particle burst with 15 cubes (was 10)
+    this.emit({ pos, count: 15, color, speed: 3, lifetime: 0.4, size: 0.3, spread: 0.8, gravity: 0.3 });
   }
 
   emit(config: ParticleConfig): void {

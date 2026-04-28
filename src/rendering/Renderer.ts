@@ -205,12 +205,14 @@ export class Renderer {
 
   // ── World / terrain ─────────────────────────────────────────────────
 
-  initWorld(missionId: string): World {
+  initWorld(missionId: string, dailySeed?: string): World {
     this.removeTerrain();
 
     const size: Vec3 = { x: 16, y: 8, z: 16 };
     this.world = new World(size);
-    generateQuarry(this.world, missionId);
+    // Phase 2: Daily seed - use daily seed if provided for consistent daily worlds
+    const seed = dailySeed || missionId;
+    generateQuarry(this.world, seed);
     buildScene(this.world, this.scene);
     this.updateCameraCollidables();
     return this.world;

@@ -12,6 +12,12 @@ export interface SaveData {
   lastPlayed: number;
   hasSeenTutorial: boolean;
   prestigeLevel: number;
+  // Phase 2: Daily seed and streak tracking
+  bestShardCount: number;
+  bestCompletionTime: number;
+  lastPlayedDate: string;
+  streak: number;
+  streakEnd: number; // Timestamp when streak resets
 }
 
 const STORAGE_KEY = 'smashmine_save';
@@ -40,6 +46,11 @@ const defaultData: SaveData = {
   lastPlayed: Date.now(),
   hasSeenTutorial: false,
   prestigeLevel: 0,
+  bestShardCount: 0,
+  bestCompletionTime: 0,
+  lastPlayedDate: '',
+  streak: 0,
+  streakEnd: 0,
 };
 
 export class SaveSystem {
@@ -48,6 +59,11 @@ export class SaveSystem {
 
   constructor() {
     this.load();
+    // Initialize streak if not set
+    if (!this.data.streakEnd) {
+      this.data.streakEnd = 0;
+      this.markDirty();
+    }
   }
 
   private load(): void {
@@ -192,6 +208,74 @@ export class SaveSystem {
 
   getData(): SaveData {
     return this.data;
+  }
+  
+  // Phase 2: Daily seed - Get today's date string (YYYY-MM-DD)
+  getTodayDateString(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  }
+  
+  // Phase 2: Daily seed - Update saved date if it's a new day
+  updatePlayedDate(): boolean {
+    const today = this.getTodayDateString();
+    if (this.data.lastPlayedDate !== today) {
+      // New day - check if streak continues
+      this.checkStreak(today);
+      this.data.lastPlayedDate = today;
+      this.markDirty();
+      return true;
+    }
+    return false;
+  }
+  
+  // Phase 2: Streak - Check if yesterday's run counts
+  private checkStreak(today: string): void {
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+    
+    // Count days since last played
+    const daysSince = Math.floor((now - this.data.lastPlayed) / dayMs);
+    
+    if (daysSince === 1) {
+      // Consecutive day - extend streak
+      this.data.streak += 1;
+    } else if (daysSince === 0) {
+      // Same day - streak unchanged
+    } else {
+      // Gap - reset streak
+      this.data.streak = 0;
+    }
+    
+    this.data.streakEnd = now + dayMs; // Reset streak at end of this day
+    this.markDirty();
+  }
+  
+  // Phase 2: Streak - Check if replay within 10s for streak counter
+  updateStreakOnReplay(): boolean {
+    const now = Date.now();
+    if (now - this.data.lastPlayed <= 10000) { // 10 seconds
+      this.data.streak += 1;
+      this.markDirty();
+      return true;
+    }
+    return false;
+  }
+  
+  // Phase 2: Streak - Get streak count (0-3+)
+  getStreak(): number {
+    return this.data.streak;
+  }
+  
+  // Phase 2: Daily seed - Track personal best
+  recordBest(shardCount: number, completionTime: number): void {
+    if (shardCount > this.data.bestShardCount) {
+      this.data.bestShardCount = shardCount;
+    }
+    if (completionTime > 0 && (this.data.bestCompletionTime === 0 || completionTime < this.data.bestCompletionTime)) {
+      this.data.bestCompletionTime = completionTime;
+    }
+    this.markDirty();
   }
 }
 

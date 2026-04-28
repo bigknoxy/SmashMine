@@ -686,3 +686,117 @@ html, body {
 #retry-btn:hover {
   box-shadow: 0 0 20px #ff4444;
 }
+
+/* ── Phase 2: Combo Meter Display ── */
+
+.combo-display {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(2rem, 8vw, 4rem);
+  font-weight: 900;
+  color: #ffd700;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 6;
+}
+
+.combo-display.combo-active {
+  opacity: 1;
+  animation: comboPulse 0.3s ease-out;
+}
+
+@keyframes comboPulse {
+  0% { transform: translate(-50%, -50%) scale(1.5); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+/* ── Phase 2: Streak Display ── */
+
+.streak-display {
+  position: absolute;
+  top: 60px;
+  right: 10px;
+  font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+  font-weight: 700;
+  color: #ff6b35;
+  text-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* ── Phase 2: Timer Tension ── */
+
+#timer-display.time-warning {
+  color: #ffd700;
+}
+
+#timer-display.time-critical {
+  color: #ff4444;
+  animation: none;
+}
+
+#timer-display.time-pulse {
+  color: #ff4444;
+  animation: timerPulse 0.5s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+#timer-display.near-miss {
+  position: relative;
+}
+
+.near-miss-msg {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: #ff4444;
+  animation: nearMissPulse 0.5s ease-in-out infinite;
+  white-space: nowrap;
+}
+
+@keyframes nearMissPulse {
+  0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+  50% { opacity: 0.7; transform: translateX(-50%) scale(1.1); }
+}
+
+/* ── Phase 2: Floating Texts ── */
+
+.floating-texts-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 7;
+}
+
+.floating-text {
+  position: absolute;
+  font-size: clamp(1.2rem, 4vw, 2rem);
+  font-weight: 900;
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ── Phase 2: Daily Seed ── */
+
+.daily-seed {
+  font-size: clamp(0.8rem, 2vw, 1rem);
+  color: #888;
+  margin-top: 0.5rem;
+}

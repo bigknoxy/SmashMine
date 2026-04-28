@@ -17,6 +17,7 @@ import * as MissionSelect from '../ui/MissionSelect.js';
 import * as Shop from '../ui/Shop.js';
 import { Joystick } from '../ui/Joystick.js';
 import { showIntro } from '../ui/MissionIntro.js';
+import { Vector3 } from 'three';
 
 import { MISSIONS } from '../data/missions.js';
 import type { MissionDef } from './types.js';
@@ -47,6 +48,21 @@ export class Game {
   private smashCooldown = 0;
   private lastTargetPos: Vec3 = { x: 0, y: 0, z: 0 };
   private cachedTarget: Vec3 | null = null;
+
+  // Phase 2: Smash Juice
+  private hitStopTimer = 0;
+  private floatingTexts: { x: number; y: number; z: number; text: string; age: number; maxAge: number }[] = [];
+  
+   // Phase 2: Combo Meter
+   private lastSmashTime = 0;
+   private comboCount = 0;
+   
+   // Phase 2: Daily Seed
+   private daySeed = '';
+   // Track streak across sessions
+   private lastPlayedSession: number = 0;
+   
+   // Phase 2: Streak (Saved) - tracked in SaveSystem
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new Renderer(canvas);
@@ -95,6 +111,10 @@ export class Game {
   }
 
   start(): void {
+    // Phase 2: Daily Seed - Initialize today's date
+    this.daySeed = saveSystem.getTodayDateString();
+    saveSystem.updatePlayedDate();
+
     this.titleScreen.show();
     this.titleScreen.onStart(() => {
       this.titleScreen.hide();
@@ -126,11 +146,35 @@ export class Game {
     const delta = Math.min((timestamp - this.lastTime) / 1000, 0.1);
     this.lastTime = timestamp;
 
+    // Phase 2: Smash Juice - Hit-stop (freeze simulation ~50ms)
+    if (this.hitStopTimer > 0) {
+      this.hitStopTimer -= delta;
+      // Still render during hit-stop for visual feedback
+      this.renderer.render();
+      this.particleSystem.update(0); // Don't advance particles during hit-stop
+      requestAnimationFrame((t) => this.loop(t));
+      return;
+    }
+
     if (!this.paused) {
       this.update(delta);
     }
     this.renderer.render();
     this.particleSystem.update(delta);
+    this.updateFloatingTexts(delta);
+
+    // Phase 2: Timer tension - ticking SFX last 10s
+    const progress = this.missionManager.getProgress();
+    if (progress.elapsed > 0 && this.currentMission) {
+      const remaining = Math.max(0, this.currentMission.timeLimit - progress.elapsed);
+      if (remaining <= 10 && remaining > 0 && Math.floor(remaining) !== Math.floor(remaining + delta)) {
+        this.audioEngine.playTimerTick();
+      }
+      // Near-miss messaging on 24/25 shards
+      if (!progress.surpriseTriggered && progress.shards >= 24 && this.missionManager.getTargetShards() === 25) {
+        HUD.showNearMiss();
+      }
+    }
 
     requestAnimationFrame((t) => this.loop(t));
   }
@@ -265,13 +309,17 @@ export class Game {
   private processLootCollection(collected: { type: LootType; amount: number }[]): void {
     if (collected.length === 0) return;
 
+    // Phase 2: Combo meter - loot multiplier (1 + comboCount * 0.1, cap x3.0)
+    const comboMult = Math.min(1 + this.comboCount * 0.1, 3);
+    
     this.audioEngine.playPickup();
     this.particleSystem.emitBurst(this.player.getPosition(), '#44ff88');
     this.tutorialManager.onAction('collect');
 
     for (const item of collected) {
-      if (item.type === 'power_shards') saveSystem.addShards(item.amount);
-      if (item.type === 'coins') saveSystem.addCoins(item.amount);
+      const amount = Math.round(item.amount * comboMult);
+      if (item.type === 'power_shards') saveSystem.addShards(amount);
+      if (item.type === 'coins') saveSystem.addCoins(amount);
     }
   }
 
@@ -297,11 +345,36 @@ export class Game {
 
     this.tutorialManager.onAction('smash');
 
+    // Phase 2: Smash Juice - Hit-stop (freeze simulation ~50ms)
+    this.hitStopTimer = 0.05;
+
+    // Phase 2: Combo meter update
+    const now = performance.now();
+    const comboWindow = 1500; // 1.5s window
+    if (now - this.lastSmashTime <= comboWindow) {
+      this.comboCount = Math.min(this.comboCount + 1, 20); // Cap combo count
+    } else {
+      this.comboCount = 0;
+    }
+    this.lastSmashTime = now;
+    HUD.updateCombo(this.comboCount, comboWindow);
+
     const broken = this.smashSystem.smash(this.world, target, this.player);
     if (broken && broken.length > 0) {
       this.audioEngine.playSmash();
       this.renderer.addShake(0.15);
       this.particleSystem.emitBurst(target, '#ff4400');
+
+      // Phase 2: Smash Juice - Floating text +1 (use combo count for display)
+      const displayText = this.comboCount > 0 ? `+${this.comboCount + 1}` : '+1';
+      this.floatingTexts.push({
+        x: target.x + 0.5,
+        y: target.y + 1.0,
+        z: target.z + 0.5,
+        text: displayText,
+        age: 0,
+        maxAge: 0.5
+      });
 
       for (const block of broken) {
         this.lootSystem.spawnBlockLoot(block.type, block.pos);
@@ -380,8 +453,18 @@ export class Game {
 
   startMission(mission: MissionDef): void {
     telemetry.missionStarted++;
+    // Phase 2: Streak - Track when replaying within 10s
+    const streakContinued = saveSystem.updateStreakOnReplay();
+    if (streakContinued) {
+      console.log(`🔥 Streak: ${saveSystem.getStreak()} consecutive runs!`);
+    }
+    
+    // Phase 2: Streak - Display streak counter
+    this.updateStreakDisplay();
+    
     this.currentMission = mission;
-    this.world = this.renderer.initWorld(mission.id);
+    // Phase 2: Daily seed - pass daily seed for consistent daily worlds
+    this.world = this.renderer.initWorld(mission.id, this.daySeed);
     this.player = new Player(this.world);
     this.lootSystem = new LootSystem(this.world);
     this.terrainDirty = false;
@@ -405,6 +488,21 @@ export class Game {
     });
   }
 
+  // Phase 2: Streak - Update streak display
+  private updateStreakDisplay(): void {
+    const el = document.getElementById('streak-display');
+    if (!el) return;
+    
+    const streak = saveSystem.getStreak();
+    if (streak > 0) {
+      el.textContent = `🔥 ${streak}`;
+      el.classList.add('streak-active');
+    } else {
+      el.textContent = '';
+      el.classList.remove('streak-active');
+    }
+  }
+
   private missionComplete(): void {
     telemetry.missionCompleted++;
     this.audioEngine.playMissionComplete();
@@ -415,6 +513,10 @@ export class Game {
     if (saveSystem.needsSave()) saveSystem.save();
 
     const progress = this.missionManager.getProgress();
+    
+    // Phase 2: Daily Seed - Record personal best
+    saveSystem.recordBest(progress.shards, progress.elapsed);
+
     RewardScreen.show(progress, (upgradeId: UpgradeId) => {
       this.pickUpgrade(upgradeId);
     });
@@ -459,4 +561,66 @@ export class Game {
 
   pause(): void { this.paused = true; }
   resume(): void { this.paused = false; this.lastTime = performance.now(); }
+
+  // Phase 2: Smash Juice - Floating text animation
+  private updateFloatingTexts(delta: number): void {
+    if (this.floatingTexts.length === 0) {
+      // Remove any leftover DOM elements
+      const container = document.getElementById('floating-texts');
+      if (container) container.innerHTML = '';
+      return;
+    }
+    
+    let aliveCount = 0;
+    let container = document.getElementById('floating-texts');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'floating-texts';
+      container.className = 'floating-texts-container';
+      document.body.appendChild(container);
+    }
+    
+    // Get camera for 3D to 2D projection
+    const camera = this.renderer.camera;
+    
+    for (let i = 0; i < this.floatingTexts.length; i++) {
+      const ft = this.floatingTexts[i];
+      ft.age += delta;
+      
+      if (ft.age < ft.maxAge) {
+        // Drift up 500ms
+        ft.y += delta * 2; // Float upward
+        
+        // Project 3D position to 2D screen coordinates
+        const vec = new Vector3(ft.x, ft.y, ft.z);
+        vec.project(camera);
+        
+        const x = (vec.x * 0.5 + 0.5) * window.innerWidth;
+        const y = (-vec.y * 0.5 + 0.5) * window.innerHeight;
+        
+        // Create or update DOM element
+        let el = document.getElementById(`floating-${i}`);
+        if (!el) {
+          el = document.createElement('div');
+          el.id = `floating-${i}`;
+          el.className = 'floating-text';
+          container.appendChild(el);
+        }
+        
+        const alpha = 1 - (ft.age / ft.maxAge);
+        el.textContent = ft.text;
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+        el.style.opacity = alpha.toString();
+        el.style.transform = `scale(${1 + ft.age / ft.maxAge})`;
+        
+        this.floatingTexts[aliveCount++] = ft;
+      } else {
+        // Remove DOM element
+        const el = document.getElementById(`floating-${i}`);
+        if (el) el.remove();
+      }
+    }
+    this.floatingTexts.length = aliveCount;
+  }
 }
