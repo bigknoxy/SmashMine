@@ -21,10 +21,15 @@ export class MissionManager {
     this.progress = this.emptyProgress();
   }
 
-  update(delta: number, collected: { type: LootType; amount: number }[]): { completed: boolean; surprise: boolean } {
-    if (!this.mission) return { completed: false, surprise: false };
+  update(delta: number, collected: { type: LootType; amount: number }[]): { completed: boolean; surprise: boolean; failed: boolean } {
+    if (!this.mission) return { completed: false, surprise: false, failed: false };
 
     this.progress.elapsed += delta;
+
+    // Check time limit first - if time's up, mission failed
+    if (this.progress.elapsed >= this.mission.timeLimit) {
+      return { completed: false, surprise: false, failed: true };
+    }
 
     for (const entry of collected) {
       this.progress.loot[entry.type] += entry.amount;
@@ -34,17 +39,17 @@ export class MissionManager {
 
     if (this.progress.shards >= this.mission.targetShards) {
       this.progress.completed = true;
-      return { completed: true, surprise: false };
+      return { completed: true, surprise: false, failed: false };
     }
 
     if (!this.progress.surpriseTriggered && this.mission.surpriseAt > 0) {
       if (this.progress.elapsed >= this.mission.timeLimit * this.mission.surpriseAt) {
         this.progress.surpriseTriggered = true;
-        return { completed: false, surprise: true };
+        return { completed: false, surprise: true, failed: false };
       }
     }
 
-    return { completed: false, surprise: false };
+    return { completed: false, surprise: false, failed: false };
   }
 
   getProgress(): MissionProgress { return this.progress; }

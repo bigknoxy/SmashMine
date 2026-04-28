@@ -6,6 +6,14 @@ export class TitleScreen {
   
   constructor() {
     this.element = document.getElementById('title-screen') as HTMLElement;
+    this.showVersion();
+  }
+  
+  private showVersion() {
+    const versionTag = document.getElementById('version-tag');
+    if (versionTag && typeof __APP_VERSION__ !== 'undefined') {
+      versionTag.textContent = `v${__APP_VERSION__}`;
+    }
   }
   
   show() {

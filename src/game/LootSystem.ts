@@ -16,7 +16,11 @@ export class LootSystem {
   spawnBlockLoot(blockType: BlockType, pos: Vec3): void {
     const drops = rollLoot(blockType);
     for (const drop of drops) {
-      this.createDrop(drop.type, drop.amount, { ...drop.worldPos, ...pos });
+      this.createDrop(drop.type, drop.amount, {
+        x: (drop.worldPos?.x ?? 0) + pos.x,
+        y: (drop.worldPos?.y ?? 0) + pos.y,
+        z: (drop.worldPos?.z ?? 0) + pos.z,
+      });
     }
   }
 

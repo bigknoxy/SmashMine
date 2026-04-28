@@ -1,5 +1,5 @@
 import { GameState } from './GameState.js';
-import type { InputState, UpgradeId, MissionProgress, LootType } from './types.js';
+import type { InputState, UpgradeId, MissionProgress, LootType, Vec3 } from './types.js';
 import { World } from '../world/World.js';
 import { Player } from './Player.js';
 import { MissionManager } from './MissionManager.js';
@@ -12,11 +12,12 @@ import { ParticleSystem } from '../rendering/ParticleSystem.js';
 import { TitleScreen } from '../ui/TitleScreen.js';
 import * as HUD from '../ui/HUD.js';
 import * as RewardScreen from '../ui/RewardScreen.js';
+import * as FailedScreen from '../ui/FailedScreen.js';
 import { Joystick } from '../ui/Joystick.js';
 import { showIntro } from '../ui/MissionIntro.js';
 
 import { MISSIONS } from '../data/missions.js';
-import { Telemetry, telemetry } from './Telemetry.js';
+import { telemetry } from './Telemetry.js';
 import { saveSystem } from './SaveSystem.js';
 import { TutorialManager } from './TutorialManager.js';
 
@@ -39,7 +40,6 @@ export class Game {
   private titleScreen: TitleScreen;
   private tutorialManager: TutorialManager;
 
-  private collectedLoot: { type: LootType; amount: number }[] = [];
   private terrainDirty = false;
   private smashCooldown = 0;
 
@@ -89,6 +89,8 @@ export class Game {
         break;
       case GameState.MISSION_COMPLETE:
         break;
+      case GameState.MISSION_FAILED:
+        break;
       case GameState.UPGRADE_PICK:
         break;
     }
@@ -115,27 +117,9 @@ export class Game {
     }
 
     this.lootSystem.update(this.player.getPosition(), delta);
-    const collected = this.lootSystem.getAndClearCollected();
-    if (collected.length > 0) {
-      this.audioEngine.playPickup();
-      this.particleSystem.emitBurst(this.player.getPosition(), '#44ff88');
-      this.tutorialManager.onAction('collect');
-    }
-    for (const item of collected) {
-      this.collectedLoot.push(item);
-      if (item.type === 'power_shards') saveSystem.addShards(item.amount);
-      if (item.type === 'coins') saveSystem.addCoins(item.amount);
-    }
-
-    const result = this.missionManager.update(delta, collected);
-
-    if (result.completed) {
-      this.missionComplete();
-    }
-    if (result.surprise) {
-      this.audioEngine.playCelebration();
-      this.terrainDirty = true;
-    }
+    const collectedLoot = this.lootSystem.getAndClearCollected();
+    this.processLootCollection(collectedLoot);
+    this.updateMission(delta, collectedLoot);
 
     if (this.terrainDirty) {
       this.renderer.rebuildTerrain();
@@ -201,6 +185,34 @@ export class Game {
     return closestBlock;
   }
 
+  private processLootCollection(collected: { type: LootType; amount: number }[]): void {
+    if (collected.length === 0) return;
+
+    this.audioEngine.playPickup();
+    this.particleSystem.emitBurst(this.player.getPosition(), '#44ff88');
+    this.tutorialManager.onAction('collect');
+
+    for (const item of collected) {
+      if (item.type === 'power_shards') saveSystem.addShards(item.amount);
+      if (item.type === 'coins') saveSystem.addCoins(item.amount);
+    }
+  }
+
+  private updateMission(delta: number, collected: { type: LootType; amount: number }[]): void {
+    const result = this.missionManager.update(delta, collected);
+
+    if (result.completed) {
+      this.missionComplete();
+    }
+    if (result.surprise) {
+      this.audioEngine.playCelebration();
+      this.terrainDirty = true;
+    }
+    if (result.failed) {
+      this.missionFailed();
+    }
+  }
+
   private handleSmash(): void {
     const pos = this.player.getPosition();
     const target = this.findSmashTarget(pos);
@@ -223,13 +235,22 @@ export class Game {
     }
   }
 
+  /**
+   * Hide gameplay UI elements (HUD, joystick, smash button).
+   * Called when transitioning to any overlay screen.
+   */
+  private hideGameplayUI(): void {
+    HUD.hide();
+    document.getElementById('smash-btn')?.classList.add('hidden');
+    document.getElementById('joystick-zone')?.classList.add('hidden');
+  }
+
   startMission(): void {
     telemetry.missionStarted++;
     const mission = MISSIONS[0];
     this.world = this.renderer.initWorld(mission.id);
     this.player = new Player(this.world);
     this.lootSystem = new LootSystem(this.world);
-    this.collectedLoot = [];
     this.terrainDirty = false;
 
     this.renderer.createPlayerMesh();
@@ -252,13 +273,10 @@ export class Game {
     telemetry.missionCompleted++;
     this.audioEngine.playMissionComplete();
     this.gameState = GameState.MISSION_COMPLETE;
-    HUD.hide();
+    this.hideGameplayUI();
 
     saveSystem.incrementMissions();
     if (saveSystem.needsSave()) saveSystem.save();
-
-    document.getElementById('smash-btn')?.classList.add('hidden');
-    document.getElementById('joystick-zone')?.classList.add('hidden');
 
     const progress = this.missionManager.getProgress();
     RewardScreen.show(progress, (upgradeId: UpgradeId) => {
@@ -268,6 +286,25 @@ export class Game {
     setTimeout(() => {
       this.gameState = GameState.UPGRADE_PICK;
     }, 1500);
+  }
+
+  private missionFailed(): void {
+    telemetry.missionFailed = (telemetry.missionFailed || 0) + 1;
+    this.audioEngine.playMissionFailed();
+    this.gameState = GameState.MISSION_FAILED;
+    this.hideGameplayUI();
+
+    const progress = this.missionManager.getProgress();
+    FailedScreen.show(progress);
+
+    FailedScreen.onRetryClick(() => {
+      this.retryMission();
+    });
+  }
+
+  private retryMission(): void {
+    FailedScreen.hide();
+    this.startMission();
   }
 
   private pickUpgrade(upgradeId: UpgradeId): void {

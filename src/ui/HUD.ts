@@ -44,7 +44,7 @@ let tutorialTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export function showTutorial(message: string, progress: string): void {
   const el = document.getElementById('tutorial-toast');
-  if (el) {
+  if (el && message) {
     el.textContent = message;
     el.classList.remove('hidden');
     if (tutorialTimeout) clearTimeout(tutorialTimeout);
