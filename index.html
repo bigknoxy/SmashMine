@@ -8,6 +8,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
+  <!-- Mobile orientation: lock to landscape to ensure optimal mobile gameplay -->
+  <meta name="screen-orientation" content="landscape" />
+  <meta name="orientation" content="landscape" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="favicon.ico" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180" />
@@ -19,6 +22,13 @@
 <body>
   <div id="game-container">
     <canvas id="game-canvas"></canvas>
+    <!-- Rotate prompt overlay for portrait mode -->
+    <div id="rotate-prompt" class="rotate-prompt hidden">
+      <div class="rotate-prompt-inner">
+        <span class="rotate-icon">↔</span>
+        <p>Rotate device to landscape</p>
+      </div>
+    </div>
     <div id="title-screen">
       <h1 class="game-title">SmashMine</h1>
       <div class="title-buttons">

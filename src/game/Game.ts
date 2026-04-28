@@ -19,7 +19,7 @@ import { Joystick } from '../ui/Joystick.js';
 import { showIntro } from '../ui/MissionIntro.js';
 
 import { MISSIONS } from '../data/missions.js';
-import type { MissionDef } from '../data/missions.js'; // Might need to export/import correctly
+import type { MissionDef } from './types.js';
 import { telemetry } from './Telemetry.js';
 import { saveSystem } from './SaveSystem.js';
 import { TutorialManager } from './TutorialManager.js';
@@ -89,7 +89,7 @@ export class Game {
 
   private goToHome(): void {
     this.gameState = GameState.TITLE;
-    this.titleScreen.show();
+    this.applyStateToUI(this.gameState);
     // Clean up any active mission state if needed
     // The startMission method handles re-init of world/player
   }
@@ -110,6 +110,7 @@ export class Game {
     }
 
     this.gameState = GameState.TITLE;
+    this.applyStateToUI(this.gameState);
     this.lastTime = performance.now();
     requestAnimationFrame((t) => this.loop(t));
   }
@@ -315,6 +316,60 @@ export class Game {
    * Hide gameplay UI elements (HUD, joystick, smash button).
    * Called when transitioning to any overlay screen.
    */
+  // Fix 3: state-gate HUD and overlays to prevent overlap
+  private applyStateToUI(state: GameState): void {
+    // Hide all overlays first
+    this.titleScreen.hide();
+    MissionSelect.hide();
+    RewardScreen.hide();
+    FailedScreen.hide();
+    Shop.hide();
+    document.getElementById('mission-intro')?.classList.add('hidden');
+    document.getElementById('rotate-prompt')?.classList.add('hidden');
+
+    // Toggle gameplay UI (HUD, controls)
+    const isPlaying = state === GameState.PLAYING || state === GameState.MISSION_INTRO;
+    if (isPlaying) {
+      HUD.show();
+      document.getElementById('smash-btn')?.classList.remove('hidden');
+      document.getElementById('joystick-zone')?.classList.remove('hidden');
+    } else {
+      HUD.hide();
+      document.getElementById('smash-btn')?.classList.add('hidden');
+      document.getElementById('joystick-zone')?.classList.add('hidden');
+    }
+
+    // Show state-specific overlays
+    switch (state) {
+      case GameState.TITLE:
+        this.titleScreen.show();
+        this.checkOrientation(); // Show rotate prompt if in portrait
+        break;
+      case GameState.MISSION_INTRO:
+        // Intro is shown via showIntro() separately
+        break;
+      case GameState.MISSION_COMPLETE:
+        RewardScreen.show(this.missionManager.getProgress(), (upg) => this.pickUpgrade(upg));
+        break;
+      case GameState.MISSION_FAILED:
+        FailedScreen.show(this.missionManager.getProgress());
+        break;
+      case GameState.UPGRADE_PICK:
+        // Handled after reward screen timeout
+        break;
+    }
+  }
+
+  private checkOrientation(): void {
+    if (window.innerHeight > window.innerWidth) {
+      document.getElementById('rotate-prompt')?.classList.remove('hidden');
+      this.pause();
+    } else {
+      document.getElementById('rotate-prompt')?.classList.add('hidden');
+      this.resume();
+    }
+  }
+
   private hideGameplayUI(): void {
     HUD.hide();
     document.getElementById('smash-btn')?.classList.add('hidden');
@@ -343,8 +398,10 @@ export class Game {
     document.getElementById('joystick-zone')?.classList.remove('hidden');
 
     this.gameState = GameState.MISSION_INTRO;
+    this.applyStateToUI(this.gameState);
     showIntro(mission).then(() => {
       this.gameState = GameState.PLAYING;
+      this.applyStateToUI(this.gameState);
     });
   }
 
@@ -352,7 +409,7 @@ export class Game {
     telemetry.missionCompleted++;
     this.audioEngine.playMissionComplete();
     this.gameState = GameState.MISSION_COMPLETE;
-    this.hideGameplayUI();
+    this.applyStateToUI(this.gameState);
 
     saveSystem.incrementMissions();
     if (saveSystem.needsSave()) saveSystem.save();
@@ -364,6 +421,7 @@ export class Game {
 
     setTimeout(() => {
       this.gameState = GameState.UPGRADE_PICK;
+      this.applyStateToUI(this.gameState);
     }, 1500);
   }
 
@@ -371,7 +429,7 @@ export class Game {
     telemetry.missionFailed = (telemetry.missionFailed || 0) + 1;
     this.audioEngine.playMissionFailed();
     this.gameState = GameState.MISSION_FAILED;
-    this.hideGameplayUI();
+    this.applyStateToUI(this.gameState);
 
     const progress = this.missionManager.getProgress();
     FailedScreen.show(progress);
@@ -394,6 +452,9 @@ export class Game {
 
   resize(width: number, height: number): void {
     this.renderer.resize(width, height);
+    if (this.gameState === GameState.TITLE) {
+      this.checkOrientation();
+    }
   }
 
   pause(): void { this.paused = true; }

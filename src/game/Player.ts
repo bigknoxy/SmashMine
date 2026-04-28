@@ -18,6 +18,7 @@ export class Player {
     this.position = { x: world.size.x / 2, y: world.size.y - 2, z: world.size.z / 2 };
     this.velocity = { x: 0, y: 0, z: 0 };
     this.onGround = false;
+    this.ensurePlayerNotInsideTerrain(world);
   }
 
   private getMoveSpeed(): number {
@@ -35,10 +36,11 @@ export class Player {
   }
   applyUpgrade(id: UpgradeId): void { this.upgrades.set(id, (this.upgrades.get(id) || 0) + 1); }
 
-  resetPosition(): void {
+  resetPosition(world: World): void {
     this.position = { x: 8, y: 7, z: 8 };
     this.velocity = { x: 0, y: 0, z: 0 };
     this.onGround = true;
+    this.ensurePlayerNotInsideTerrain(world);
   }
 
   update(delta: number, input: InputState, world: World): void {
@@ -76,7 +78,7 @@ export class Player {
     }
 
     if (newPos.y < -5) {
-      this.resetPosition();
+      this.resetPosition(world);
       return;
     }
     this.position = newPos;
@@ -89,6 +91,19 @@ export class Player {
   }
 
   getPosition(): Vec3 { return { ...this.position }; }
+
+  // Fix 5: spawn-safety check prevents getting stuck in terrain
+  private ensurePlayerNotInsideTerrain(world: World): void {
+    const pos = this.position;
+    let gridY = Math.floor(pos.y);
+    while (world.getBlock(Math.floor(pos.x), gridY, Math.floor(pos.z)) !== 'air') {
+      gridY += 1;
+      if (gridY > world.size.y) break; // safety cap
+    }
+    if (gridY !== Math.floor(pos.y)) {
+      this.position.y = gridY + 0.001;
+    }
+  }
 
   // ── Collision helpers ───────────────────────────────────────────────
 

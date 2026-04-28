@@ -2,6 +2,7 @@ import {
   WebGLRenderer, PerspectiveCamera, Scene, AmbientLight, DirectionalLight,
   Mesh, MeshStandardMaterial, BoxGeometry, CircleGeometry, MeshBasicMaterial,
   Group, Color, EdgesGeometry, LineSegments, LineBasicMaterial, BufferGeometry, Line, Vector3,
+  type Object3D,
 } from 'three';
 import { CameraController } from './CameraController.js';
 import type { Vec3 } from '../game/types.js';
@@ -211,6 +212,7 @@ export class Renderer {
     this.world = new World(size);
     generateQuarry(this.world, missionId);
     buildScene(this.world, this.scene);
+    this.updateCameraCollidables();
     return this.world;
   }
 
@@ -218,6 +220,17 @@ export class Renderer {
     if (!this.world) return;
     this.removeTerrain();
     buildScene(this.world, this.scene);
+    this.updateCameraCollidables();
+  }
+
+  private updateCameraCollidables(): void {
+    const meshes: Object3D[] = [];
+    this.scene.traverse((child) => {
+      if (TERRAIN_TAGS.some((tag) => child.userData[tag])) {
+        meshes.push(child);
+      }
+    });
+    this.cameraController.setCollidableMeshes(meshes);
   }
 
   private removeTerrain(): void {
