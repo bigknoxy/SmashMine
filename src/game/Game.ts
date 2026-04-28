@@ -13,10 +13,13 @@ import { TitleScreen } from '../ui/TitleScreen.js';
 import * as HUD from '../ui/HUD.js';
 import * as RewardScreen from '../ui/RewardScreen.js';
 import * as FailedScreen from '../ui/FailedScreen.js';
+import * as MissionSelect from '../ui/MissionSelect.js';
+import * as Shop from '../ui/Shop.js';
 import { Joystick } from '../ui/Joystick.js';
 import { showIntro } from '../ui/MissionIntro.js';
 
 import { MISSIONS } from '../data/missions.js';
+import type { MissionDef } from '../data/missions.js'; // Might need to export/import correctly
 import { telemetry } from './Telemetry.js';
 import { saveSystem } from './SaveSystem.js';
 import { TutorialManager } from './TutorialManager.js';
@@ -42,6 +45,8 @@ export class Game {
 
   private terrainDirty = false;
   private smashCooldown = 0;
+  private lastTargetPos: Vec3 = { x: 0, y: 0, z: 0 };
+  private cachedTarget: Vec3 | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new Renderer(canvas);
@@ -55,14 +60,65 @@ export class Game {
     this.particleSystem = new ParticleSystem(this.renderer.scene);
     this.joystick = new Joystick(this.inputState);
     this.tutorialManager = new TutorialManager();
+
+    // Set up global UI callbacks once
+    this.setupUICallbacks();
+  }
+
+  private setupUICallbacks(): void {
+    RewardScreen.onReplayClick(() => {
+      RewardScreen.hide();
+      if (this.currentMission) this.startMission(this.currentMission);
+    });
+
+    RewardScreen.onHomeClick(() => {
+      RewardScreen.hide();
+      this.goToHome();
+    });
+
+    FailedScreen.onRetryClick(() => {
+      FailedScreen.hide();
+      if (this.currentMission) this.startMission(this.currentMission);
+    });
+
+    FailedScreen.onHomeClick(() => {
+      FailedScreen.hide();
+      this.goToHome();
+    });
+  }
+
+  private goToHome(): void {
+    this.gameState = GameState.TITLE;
+    this.titleScreen.show();
+    // Clean up any active mission state if needed
+    // The startMission method handles re-init of world/player
   }
 
   start(): void {
     this.titleScreen.show();
-    this.titleScreen.onStart(() => this.startMission());
+    this.titleScreen.onStart(() => {
+      this.titleScreen.hide();
+      this.showMissionSelect();
+    });
+    
+    const shopBtn = document.getElementById('shop-btn');
+    if (shopBtn) {
+      shopBtn.onclick = () => {
+        this.titleScreen.hide();
+        Shop.show(() => this.titleScreen.show());
+      };
+    }
+
     this.gameState = GameState.TITLE;
     this.lastTime = performance.now();
     requestAnimationFrame((t) => this.loop(t));
+  }
+
+  private showMissionSelect(): void {
+    MissionSelect.show(
+      (mission) => this.startMission(mission),
+      () => this.titleScreen.show()
+    );
   }
 
   private loop(timestamp: number): void {
@@ -151,7 +207,22 @@ export class Game {
   private findSmashTarget(pos: Vec3): Vec3 | null {
     if (!this.world) return null;
 
-    const range = 3.5;
+    // Use cached target if player hasn't moved much and terrain isn't dirty
+    const dx = pos.x - this.lastTargetPos.x;
+    const dy = pos.y - this.lastTargetPos.y;
+    const dz = pos.z - this.lastTargetPos.z;
+    const moved = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+    if (moved < 0.2 && !this.terrainDirty && this.cachedTarget) {
+      // Still need to verify the cached block hasn't been removed (just in case)
+      const block = this.world.getBlock(this.cachedTarget.x, this.cachedTarget.y, this.cachedTarget.z);
+      if (block !== 'air' && block !== 'bedrock') {
+        return this.cachedTarget;
+      }
+    }
+
+    const level = saveSystem.getShopLevel('permanent_range');
+    const range = 3.5 + level * 0.5;
     let closestBlock: Vec3 | null = null;
     let minDist = range;
 
@@ -159,9 +230,11 @@ export class Game {
     const py = Math.floor(pos.y - 0.9);
     const pz = Math.floor(pos.z);
 
-    for (let x = -4; x <= 4; x++) {
+    const scanRadius = Math.ceil(range);
+
+    for (let x = -scanRadius; x <= scanRadius; x++) {
       for (let y = -3; y <= 3; y++) {
-        for (let z = -4; z <= 4; z++) {
+        for (let z = -scanRadius; z <= scanRadius; z++) {
           const bx = px + x;
           const by = py + y;
           const bz = pz + z;
@@ -170,10 +243,10 @@ export class Game {
 
           const block = this.world.getBlock(bx, by, bz);
           if (block !== 'air' && block !== 'bedrock') {
-            const dx = (bx + 0.5) - pos.x;
-            const dy = (by + 0.5) - (pos.y - 0.9);
-            const dz = (bz + 0.5) - pos.z;
-            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            const bdx = (bx + 0.5) - pos.x;
+            const bdy = (by + 0.5) - (pos.y - 0.9);
+            const bdz = (bz + 0.5) - pos.z;
+            const dist = Math.sqrt(bdx * bdx + bdy * bdy + bdz * bdz);
             if (dist < minDist) {
               minDist = dist;
               closestBlock = { x: bx, y: by, z: bz };
@@ -182,6 +255,9 @@ export class Game {
         }
       }
     }
+
+    this.lastTargetPos = { ...pos };
+    this.cachedTarget = closestBlock;
     return closestBlock;
   }
 
@@ -245,9 +321,11 @@ export class Game {
     document.getElementById('joystick-zone')?.classList.add('hidden');
   }
 
-  startMission(): void {
+  private currentMission: MissionDef | null = null;
+
+  startMission(mission: MissionDef): void {
     telemetry.missionStarted++;
-    const mission = MISSIONS[0];
+    this.currentMission = mission;
     this.world = this.renderer.initWorld(mission.id);
     this.player = new Player(this.world);
     this.lootSystem = new LootSystem(this.world);
@@ -258,6 +336,7 @@ export class Game {
     this.missionManager.startMission(mission);
 
     this.titleScreen.hide();
+    MissionSelect.hide();
     HUD.show();
 
     document.getElementById('smash-btn')?.classList.remove('hidden');
@@ -296,15 +375,6 @@ export class Game {
 
     const progress = this.missionManager.getProgress();
     FailedScreen.show(progress);
-
-    FailedScreen.onRetryClick(() => {
-      this.retryMission();
-    });
-  }
-
-  private retryMission(): void {
-    FailedScreen.hide();
-    this.startMission();
   }
 
   private pickUpgrade(upgradeId: UpgradeId): void {
@@ -312,7 +382,7 @@ export class Game {
     this.audioEngine.playUpgrade();
     telemetry.upgradesPicked++;
     RewardScreen.hide();
-    this.startMission();
+    this.showMissionSelect();
   }
 
   onCanvasClick(e: PointerEvent): void {

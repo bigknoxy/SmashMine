@@ -130,21 +130,18 @@ html, body {
 }
 
 .game-title {
-  font-size: clamp(3rem, 10vw, 6rem);
-  font-weight: 900;
-  color: #00ff88;
-  text-shadow:
-    0 0 20px #00ff88,
-    0 0 40px #00ff88,
-    0 0 80px #00ff88;
-  letter-spacing: 0.1em;
+  font-size: clamp(3rem, 10vw, 5rem);
   margin-bottom: 2rem;
-  animation: titlePulse 2s ease-in-out infinite;
+  color: #00ff88;
+  text-shadow: 0 0 20px rgba(0,255,136,0.5);
+  letter-spacing: 0.2rem;
 }
 
-@keyframes titlePulse {
-  0%, 100% { text-shadow: 0 0 20px #00ff88, 0 0 40px #00ff88; }
-  50% { text-shadow: 0 0 30px #00ff88, 0 0 60px #00ff88, 0 0 100px #00ff88; }
+.title-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
 }
 
 #start-btn {
@@ -178,6 +175,71 @@ html, body {
   color: rgba(255, 255, 255, 0.4);
   font-family: monospace;
 }
+
+/* ── Shop ── */
+
+#shop-screen {
+  background: rgba(15, 15, 30, 0.98);
+}
+
+#shop-coins {
+  font-size: 1.2rem;
+  color: #ffd700;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+#shop-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.shop-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 1rem;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.shop-info {
+  text-align: left;
+}
+
+.shop-name {
+  font-weight: 700;
+  color: #ffd700;
+  display: block;
+}
+
+.shop-desc {
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+.shop-buy-btn {
+  background: #ffd700;
+  color: #000;
+  border: none;
+  border-radius: 1rem;
+  padding: 0.5rem 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  min-width: 80px;
+}
+
+.shop-buy-btn:disabled {
+  background: #444;
+  color: #888;
+  cursor: not-allowed;
+}
+
 
 #mission-intro {
   background: rgba(0, 0, 0, 0.85);
@@ -335,19 +397,42 @@ html, body {
 
 /* ── Mission action buttons (shared base) ── */
 
+.button-row {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+  max-width: 450px;
+  margin: 1.5rem auto 0;
+  padding: 0 1rem;
+}
+
 .mission-action-btn {
-  font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+  flex: 1;
+  font-size: clamp(0.9rem, 3vw, 1.2rem);
   font-weight: 800;
   border: none;
-  padding: 0.8rem 2.5rem;
-  border-radius: 2rem;
+  padding: 1rem 0.5rem;
+  border-radius: 1.5rem;
   cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.15s;
+  transition: transform 0.1s, box-shadow 0.15s, filter 0.1s;
   touch-action: manipulation;
+  white-space: nowrap;
 }
 
 .mission-action-btn:active {
   transform: scale(0.95);
+}
+
+.mission-action-btn.secondary {
+  background: #333;
+  color: #aaa;
+  border: 1px solid #444;
+}
+
+.mission-action-btn.secondary:hover {
+  background: #444;
+  color: #fff;
 }
 
 /* ── Reward screen ── */
@@ -436,6 +521,73 @@ html, body {
   font-size: clamp(1rem, 3vw, 1.3rem);
   color: #aaa;
   margin-bottom: 1.5rem;
+}
+
+/* ── Mission Selection ── */
+
+#mission-select {
+  background: rgba(10, 10, 20, 0.95);
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 1rem;
+  overflow: hidden;
+}
+
+#mission-list {
+  flex: 1;
+  overflow-y: auto;
+  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding-right: 0.5rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mission-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 0.8rem;
+  padding: 1rem;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.mission-card:active {
+  transform: scale(0.98);
+}
+
+.mission-card.locked {
+  opacity: 0.5;
+  filter: grayscale(1);
+  cursor: not-allowed;
+}
+
+.mission-info .m-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #00ff88;
+  display: block;
+}
+
+.mission-info .m-goal {
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+.mission-status {
+  font-size: 0.8rem;
+  color: #ffd700;
+}
+
+#mission-back-btn {
+  width: auto;
+  align-self: center;
+  margin-top: 1rem;
 }
 
 #failed-loot-summary {

@@ -1,6 +1,6 @@
 {
   "name": "smashmine",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,6 +11,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "playwright-core": "^1.59.1",
     "three": "^0.170.0"
   },
   "devDependencies": {

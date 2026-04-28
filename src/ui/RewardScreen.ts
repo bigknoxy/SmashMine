@@ -6,9 +6,11 @@ const REWARD_SCREEN = document.getElementById('reward-screen');
 const LOOT_SUMMARY = document.getElementById('loot-summary');
 const UPGRADE_CARDS = document.getElementById('upgrade-cards');
 const REPLAY_BTN = document.getElementById('replay-btn');
+const HOME_BTN = document.getElementById('home-btn-success');
 
 let upgradeCallback: ((upgradeId: UpgradeId) => void) | null = null;
 let replayCallback: (() => void) | null = null;
+let homeCallback: (() => void) | null = null;
 
 export function show(progress: MissionProgress, onUpgrade: (id: UpgradeId) => void): void {
   upgradeCallback = onUpgrade;
@@ -23,9 +25,9 @@ export function show(progress: MissionProgress, onUpgrade: (id: UpgradeId) => vo
     let cardsHTML = '';
     for (const u of choices) {
       cardsHTML += `<div class="upgrade-card" data-upgrade="${u.id}">
-        <div class="upgrade-icon">${u.icon}</div>
-        <div class="upgrade-name">${u.name}</div>
-        <div class="upgrade-desc">${u.description}</div>
+        <div class="icon">${u.icon}</div>
+        <div class="name">${u.name}</div>
+        <div class="desc">${u.description}</div>
       </div>`;
     }
     UPGRADE_CARDS.innerHTML = cardsHTML;
@@ -46,9 +48,18 @@ export function hide(): void {
 export function onReplayClick(callback: () => void): void {
   replayCallback = callback;
   if (REPLAY_BTN) {
-    REPLAY_BTN.addEventListener('click', () => {
+    REPLAY_BTN.onclick = () => {
       if (replayCallback) replayCallback();
-    });
+    };
+  }
+}
+
+export function onHomeClick(callback: () => void): void {
+  homeCallback = callback;
+  if (HOME_BTN) {
+    HOME_BTN.onclick = () => {
+      if (homeCallback) homeCallback();
+    };
   }
 }
 
