@@ -205,14 +205,15 @@ export class Renderer {
 
   // ── World / terrain ─────────────────────────────────────────────────
 
-  initWorld(missionId: string, dailySeed?: string): World {
+  initWorld(missionId: string, dailySeed?: string, mineDepth = 1): World {
     this.removeTerrain();
 
     const size: Vec3 = { x: 16, y: 8, z: 16 };
     this.world = new World(size);
     // Phase 2: Daily seed - use daily seed if provided for consistent daily worlds
     const seed = dailySeed || missionId;
-    generateQuarry(this.world, seed);
+    // Phase 3: Pass mine depth to generate deeper levels
+    generateQuarry(this.world, seed, mineDepth);
     buildScene(this.world, this.scene);
     this.updateCameraCollidables();
     return this.world;

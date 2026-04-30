@@ -30,6 +30,30 @@ export type ShopItemId =
   | 'permanent_range'
   | 'permanent_power';
 
+export type MetaUpgradeId =
+  | 'pickaxe_tier'
+  | 'backpack_size'
+  | 'fog_reduction'
+  | 'token_multiplier';
+
+export interface MetaUpgradeDef {
+  id: MetaUpgradeId;
+  name: string;
+  icon: string;
+  description: string;
+  maxLevel: number;
+  costPerLevel: number;
+}
+
+export interface GameStatistics {
+  totalBlocksSmashed: number;
+  bestCombo: number;
+  totalPlayTime: number; // in seconds
+  totalTokensEarned: number;
+  deepestMineLevel: number;
+  missionsCompleted: number;
+}
+
 export type LootType =
   | 'coins'
   | 'power_shards'

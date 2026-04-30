@@ -1,4 +1,4 @@
-import type { UpgradeId, LootType, ShopItemId } from './types.js';
+import type { UpgradeId, LootType, ShopItemId, MetaUpgradeId } from './types.js';
 
 export interface SaveData {
   version: number;
@@ -18,10 +18,21 @@ export interface SaveData {
   lastPlayedDate: string;
   streak: number;
   streakEnd: number; // Timestamp when streak resets
+  // Phase 3: Meta Progression
+  tokens: number;
+  mineDepth: number;
+  metaUpgrades: Record<MetaUpgradeId, number>;
+  statistics: {
+    totalBlocksSmashed: number;
+    bestCombo: number;
+    totalPlayTime: number;
+    totalTokensEarned: number;
+    deepestMineLevel: number;
+  };
 }
 
 const STORAGE_KEY = 'smashmine_save';
-const CURRENT_VERSION = 1;
+const CURRENT_VERSION = 2;
 
 const defaultData: SaveData = {
   version: CURRENT_VERSION,
@@ -51,6 +62,22 @@ const defaultData: SaveData = {
   lastPlayedDate: '',
   streak: 0,
   streakEnd: 0,
+  // Phase 3: Meta Progression
+  tokens: 0,
+  mineDepth: 1,
+  metaUpgrades: {
+    pickaxe_tier: 0,
+    backpack_size: 0,
+    fog_reduction: 0,
+    token_multiplier: 0,
+  },
+  statistics: {
+    totalBlocksSmashed: 0,
+    bestCombo: 0,
+    totalPlayTime: 0,
+    totalTokensEarned: 0,
+    deepestMineLevel: 1,
+  },
 };
 
 export class SaveSystem {
@@ -106,17 +133,6 @@ export class SaveSystem {
 
   reset(): void {
     this.data = { ...defaultData, lastPlayed: Date.now() };
-    this.save();
-  }
-
-  prestige(): void {
-    const bonus = Math.floor(this.data.missionsCompleted / 5) + 1;
-    this.data.prestigeLevel += 1;
-    this.data.shards = 0;
-    this.data.coins = 0;
-    // Reset mission progress but KEEP shopItems and prestige bonuses
-    this.data.missionsCompleted = 0;
-    this.data.lastPlayed = Date.now();
     this.save();
   }
 
@@ -208,6 +224,91 @@ export class SaveSystem {
 
   getData(): SaveData {
     return this.data;
+  }
+  
+  // Phase 3: Token Economy
+  getTokens(): number {
+    return this.data.tokens;
+  }
+  
+  addTokens(amount: number): void {
+    const multiplier = 1 + (this.data.metaUpgrades?.token_multiplier ?? 0) * 0.25;
+    const finalAmount = Math.round(amount * multiplier);
+    this.data.tokens += finalAmount;
+    this.data.statistics.totalTokensEarned += finalAmount;
+    this.markDirty();
+  }
+  
+  // Phase 3: Mine Depth
+  getMineDepth(): number {
+    return this.data.mineDepth;
+  }
+  
+  setMineDepth(depth: number): void {
+    this.data.mineDepth = Math.max(this.data.mineDepth, depth);
+    if (depth > this.data.statistics.deepestMineLevel) {
+      this.data.statistics.deepestMineLevel = depth;
+    }
+    this.markDirty();
+  }
+  
+  // Phase 3: Meta Upgrades
+  getMetaUpgradeLevel(id: MetaUpgradeId): number {
+    return this.data.metaUpgrades?.[id] ?? 0;
+  }
+  
+  canPurchaseMetaUpgrade(id: MetaUpgradeId, cost: number): boolean {
+    return this.data.tokens >= cost && (this.data.metaUpgrades?.[id] ?? 0) < this.getMetaUpgradeMaxLevel(id);
+  }
+  
+  purchaseMetaUpgrade(id: MetaUpgradeId, cost: number): boolean {
+    if (!this.canPurchaseMetaUpgrade(id, cost)) return false;
+    this.data.tokens -= cost;
+    if (!this.data.metaUpgrades) this.data.metaUpgrades = { pickaxe_tier: 0, backpack_size: 0, fog_reduction: 0, token_multiplier: 0 };
+    this.data.metaUpgrades[id] = (this.data.metaUpgrades[id] ?? 0) + 1;
+    this.markDirty();
+    return true;
+  }
+  
+  private getMetaUpgradeMaxLevel(id: MetaUpgradeId): number {
+    const maxLevels: Record<MetaUpgradeId, number> = {
+      pickaxe_tier: 5,
+      backpack_size: 5,
+      fog_reduction: 3,
+      token_multiplier: 4,
+    };
+    return maxLevels[id] ?? 1;
+  }
+  
+  // Phase 3: Statistics
+  updateStatistics(stats: Partial<SaveData['statistics']>): void {
+    if (!this.data.statistics) {
+      this.data.statistics = { totalBlocksSmashed: 0, bestCombo: 0, totalPlayTime: 0, totalTokensEarned: 0, deepestMineLevel: 1 };
+    }
+    Object.assign(this.data.statistics, { ...this.data.statistics, ...stats });
+    this.markDirty();
+  }
+  
+  getStatistics(): SaveData['statistics'] {
+    return this.data.statistics;
+  }
+  
+  // Phase 3: Prestige - enhanced to keep meta progression
+  prestige(): void {
+    const bonus = Math.floor(this.data.missionsCompleted / 5) + 1;
+    const tokens = this.data.tokens;
+    const metaUpgrades = { ...this.data.metaUpgrades };
+    const statistics = { ...this.data.statistics };
+    const mineDepth = this.data.mineDepth;
+    
+    this.data = { ...defaultData, lastPlayed: Date.now() };
+    this.data.prestigeLevel += 1;
+    this.data.tokens = tokens; // Keep tokens
+    this.data.metaUpgrades = metaUpgrades; // Keep meta upgrades
+    this.data.statistics = statistics; // Keep statistics
+    this.data.mineDepth = mineDepth; // Keep mine depth
+    this.markDirty();
+    this.save();
   }
   
   // Phase 2: Daily seed - Get today's date string (YYYY-MM-DD)

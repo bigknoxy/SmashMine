@@ -9,6 +9,7 @@ const UPGRADE_CARDS = document.getElementById('upgrade-cards');
 const REPLAY_BTN = document.getElementById('replay-btn');
 const HOME_BTN = document.getElementById('home-btn-success');
 const STREAK_DISPLAY = document.getElementById('streak-display');
+const TOKEN_DISPLAY = document.getElementById('reward-tokens');
 
 let upgradeCallback: ((upgradeId: UpgradeId) => void) | null = null;
 let replayCallback: (() => void) | null = null;
@@ -31,6 +32,15 @@ export function show(progress: MissionProgress, onUpgrade: (id: UpgradeId) => vo
     } else {
       STREAK_DISPLAY.classList.add('hidden');
     }
+  }
+
+  // Phase 3: Show tokens earned
+  if (TOKEN_DISPLAY) {
+    const baseTokens = Math.floor(progress.shards * 2);
+    const timeBonus = Math.max(0, Math.floor((60 - progress.elapsed) * 10));
+    const totalTokens = baseTokens + timeBonus;
+    TOKEN_DISPLAY.textContent = `Tokens: +${totalTokens} 🪙`;
+    TOKEN_DISPLAY.classList.remove('hidden');
   }
 
   if (UPGRADE_CARDS) {

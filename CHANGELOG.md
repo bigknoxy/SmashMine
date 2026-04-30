@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-04-29
+
+### Added (Phase 3: Meta Progression)
+- **Token Economy**: Earn tokens from runs (2 per shard + time bonus).
+- **Mine Depth**: Progress deeper with each completed mission (affects ore quality).
+- **Meta Upgrades**: Permanent upgrades using tokens:
+  - Pickaxe Tier (5 levels): Reduces block HP by 20% per level.
+  - Backpack Size (5 levels): Increases loot capacity.
+  - Fog Reduction (3 levels): Clears fog for better visibility.
+  - Token Multiplier (4 levels): +25% tokens per level.
+- **Statistics Tracking**: All-time stats (blocks smashed, best combo, play time, etc.).
+- **Enhanced Prestige**: Now keeps tokens, meta upgrades, statistics, and mine depth.
+- **Meta Upgrade Screen**: New UI accessible from title screen.
+- **Reward Screen**: Now shows tokens earned after mission completion.
+- **HUD**: Added token display during gameplay.
+
+### Changed
+- Save system updated to version 2 (automatic migration).
+- `generateQuarry()` now accepts mine depth for better ore generation at deeper levels.
+
 ## [0.2.0] - 2026-04-28
 
 ### Added (Phase 2: Smash Juice & Addictiveness)

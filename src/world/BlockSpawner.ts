@@ -19,9 +19,9 @@ function mulberry32(a: number) {
   };
 }
 
-export function generateQuarry(world: World, missionId: string): void {
+export function generateQuarry(world: World, missionId: string, mineDepth = 1): void {
   const size = world.size;
-  const rand = mulberry32(stringHash(missionId));
+  const rand = mulberry32(stringHash(missionId + mineDepth));
 
   // Clear everything to air
   for (let y = 0; y < size.y; y++)
@@ -46,13 +46,19 @@ export function generateQuarry(world: World, missionId: string): void {
     }
   }
 
-  // Scatter ore veins in walls
-  for (let i = 0; i < 30; i++) {
+  // Phase3: Scatter ore veins - deeper levels have better ores
+  for (let i = 0; i < 30 + mineDepth * 5; i++) {
     const wx = rand() < 0.5 ? (rand() < 0.5 ? 1 : size.x - 2) : Math.floor(rand() * size.x);
     const wy = 1 + Math.floor(rand() * (size.y - 2));
     const wz = rand() < 0.5 ? (rand() < 0.5 ? 1 : size.z - 2) : Math.floor(rand() * size.z);
     const oreType = rand();
-    const type: BlockType = oreType < 0.35 ? 'copper_ore' : oreType < 0.55 ? 'shard_cluster' : oreType < 0.7 ? 'blast_crystal' : oreType < 0.82 ? 'gold_ore' : oreType < 0.92 ? 'lucky_cube' : 'op_relic_block';
+    // Phase3: Deeper levels have better ore chances
+    const depthBonus = Math.min(mineDepth * 0.05, 0.3);
+    const type: BlockType = oreType < 0.2 + depthBonus ? 'gold_ore' : 
+      oreType < 0.35 + depthBonus ? 'copper_ore' : 
+      oreType < 0.55 ? 'shard_cluster' : 
+      oreType < 0.7 ? 'blast_crystal' : 
+      oreType < 0.82 ? 'lucky_cube' : 'op_relic_block';
     world.setBlock(vec3(wx, wy, wz), type);
     // Add a couple neighbor blocks too
     const dirs = [vec3(wx+1,wy,wz), vec3(wx-1,wy,wz), vec3(wx,wy,wz+1), vec3(wx,wy,wz-1)];

@@ -18,6 +18,11 @@ export function updateCoins(coins: number): void {
   if (el) el.textContent = coins.toString();
 }
 
+export function updateTokens(tokens: number): void {
+  const el = document.getElementById('token-count');
+  if (el) el.textContent = tokens.toString();
+}
+
 export function updateTimer(elapsed: number, limit: number): void {
   const remaining = Math.max(0, limit - elapsed);
   const minutes = Math.floor(remaining / 60);

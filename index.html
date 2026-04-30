@@ -34,6 +34,7 @@
       <div class="title-buttons">
         <button id="start-btn">TAP TO START</button>
         <button id="shop-btn" class="mission-action-btn secondary">UPGRADES</button>
+        <button id="meta-upgrade-btn" class="mission-action-btn secondary">META</button>
       </div>
       <div id="version-tag"></div>
     </div>
@@ -42,6 +43,12 @@
       <div id="shop-coins">Coins: <span id="shop-coin-count">0</span></div>
       <div id="shop-list"></div>
       <button id="shop-back-btn" class="mission-action-btn secondary">BACK</button>
+    </div>
+    <div id="upgrade-screen" class="overlay hidden">
+      <h2>Meta Upgrades</h2>
+      <div id="upgrade-tokens">Tokens: <span id="upgrade-token-count">0</span></div>
+      <div id="upgrade-list"></div>
+      <button id="upgrade-close-btn" class="mission-action-btn secondary">BACK</button>
     </div>
     <div id="mission-select" class="overlay hidden">
       <h2>Select Mission</h2>
@@ -56,6 +63,7 @@
       <div id="lifetime-stats"></div>
       <div id="hud-shards">Shards: <span id="shard-count">0/25</span></div>
       <div id="hud-coins">Coins: <span id="coin-count">0</span></div>
+      <div id="hud-tokens">Tokens: <span id="token-count">0</span></div>
       <div id="hud-timer"><span id="timer-display">0:00</span></div>
       <div id="combo-display" class="combo-display"></div>
       <div id="streak-display" class="streak-display"></div>
@@ -70,6 +78,7 @@
     <div id="reward-screen" class="overlay mission-overlay hidden">
       <h2>MISSION COMPLETE!</h2>
       <div id="loot-summary" class="loot-summary"></div>
+      <div id="reward-tokens" class="token-reward hidden"></div>
       <h3>Choose an Upgrade</h3>
       <div id="upgrade-cards"></div>
       <div class="button-row">

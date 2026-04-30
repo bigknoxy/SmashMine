@@ -1,5 +1,5 @@
 import { GameState } from './GameState.js';
-import type { InputState, UpgradeId, MissionProgress, LootType, Vec3 } from './types.js';
+import type { InputState, UpgradeId, MissionProgress, LootType, Vec3, MetaUpgradeId } from './types.js';
 import { World } from '../world/World.js';
 import { Player } from './Player.js';
 import { MissionManager } from './MissionManager.js';
@@ -15,6 +15,7 @@ import * as RewardScreen from '../ui/RewardScreen.js';
 import * as FailedScreen from '../ui/FailedScreen.js';
 import * as MissionSelect from '../ui/MissionSelect.js';
 import * as Shop from '../ui/Shop.js';
+import * as UpgradeScreen from '../ui/UpgradeScreen.js';
 import { Joystick } from '../ui/Joystick.js';
 import { showIntro } from '../ui/MissionIntro.js';
 import { Vector3 } from 'three';
@@ -63,6 +64,12 @@ export class Game {
    private lastPlayedSession: number = 0;
    
    // Phase 2: Streak (Saved) - tracked in SaveSystem
+
+  // Phase3: Meta Progression
+  private blocksSmashed = 0;
+  private sessionStartTime = 0;
+  private missionStartTime = 0;
+
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new Renderer(canvas);
@@ -126,6 +133,14 @@ export class Game {
       shopBtn.onclick = () => {
         this.titleScreen.hide();
         Shop.show(() => this.titleScreen.show());
+      };
+    }
+
+    const metaUpgradeBtn = document.getElementById('meta-upgrade-btn');
+    if (metaUpgradeBtn) {
+      metaUpgradeBtn.onclick = () => {
+        this.titleScreen.hide();
+        UpgradeScreen.show(() => this.titleScreen.show());
       };
     }
 
@@ -236,6 +251,7 @@ export class Game {
       saveSystem.getTotalCoins(),
       saveSystem.getMissionsCompleted()
     );
+    HUD.updateTokens(saveSystem.getTokens());
 
     if (this.tutorialManager.isActive()) {
       HUD.showTutorial(this.tutorialManager.message(), this.tutorialManager.progress());
@@ -382,6 +398,15 @@ export class Game {
       }
       this.terrainDirty = true;
       telemetry.lootCollected += broken.length;
+      
+      // Phase3: Track blocks smashed and update best combo
+      this.blocksSmashed += broken.length;
+      if (this.comboCount > 0) {
+        const stats = saveSystem.getStatistics();
+        if (this.comboCount > stats.bestCombo) {
+          saveSystem.updateStatistics({ bestCombo: this.comboCount });
+        }
+      }
     }
   }
 
@@ -463,11 +488,17 @@ export class Game {
     this.updateStreakDisplay();
     
     this.currentMission = mission;
+    // Phase 3: Apply mine depth to world generation
+    const mineDepth = saveSystem.getMineDepth();
     // Phase 2: Daily seed - pass daily seed for consistent daily worlds
-    this.world = this.renderer.initWorld(mission.id, this.daySeed);
+    this.world = this.renderer.initWorld(mission.id, this.daySeed, mineDepth);
     this.player = new Player(this.world);
     this.lootSystem = new LootSystem(this.world);
     this.terrainDirty = false;
+    
+    // Phase 3: Reset session stats and start timing
+    this.blocksSmashed = 0;
+    this.missionStartTime = performance.now();
 
     this.renderer.createPlayerMesh();
 
@@ -510,10 +541,28 @@ export class Game {
     this.applyStateToUI(this.gameState);
 
     saveSystem.incrementMissions();
+    
+    // Phase3: Calculate token reward
+    const progress = this.missionManager.getProgress();
+    const baseTokens = Math.floor(progress.shards * 2); // 2 tokens per shard
+    const timeBonus = Math.max(0, Math.floor((this.currentMission!.timeLimit - progress.elapsed) * 10)); // 10 tokens per second remaining
+    const totalTokens = baseTokens + timeBonus;
+    
+    saveSystem.addTokens(totalTokens);
+    
+    // Phase3: Update statistics
+    const playTime = this.missionStartTime > 0 ? (performance.now() - this.missionStartTime) / 1000 : 0;
+    saveSystem.updateStatistics({
+      totalBlocksSmashed: this.blocksSmashed,
+      totalPlayTime: playTime,
+    });
+    
+    // Phase3: Increase mine depth on successful completion
+    const newDepth = saveSystem.getMineDepth() + 1;
+    saveSystem.setMineDepth(newDepth);
+    
     if (saveSystem.needsSave()) saveSystem.save();
 
-    const progress = this.missionManager.getProgress();
-    
     // Phase 2: Daily Seed - Record personal best
     saveSystem.recordBest(progress.shards, progress.elapsed);
 
