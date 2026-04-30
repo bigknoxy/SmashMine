@@ -495,10 +495,13 @@ export class Game {
     this.player = new Player(this.world);
     this.lootSystem = new LootSystem(this.world);
     this.terrainDirty = false;
-    
+
     // Phase 3: Reset session stats and start timing
     this.blocksSmashed = 0;
     this.missionStartTime = performance.now();
+
+    // Initialize camera position based on player spawn
+    this.renderer.initializeCameraPos(this.player.getPosition());
 
     this.renderer.createPlayerMesh();
 
@@ -603,9 +606,12 @@ export class Game {
 
   resize(width: number, height: number): void {
     this.renderer.resize(width, height);
-    if (this.gameState === GameState.TITLE) {
-      this.checkOrientation();
-    }
+    this.checkOrientation(); // Check orientation on all resize events
+  }
+
+  /** Called when the device orientation changes (e.g., user rotates phone) */
+  onOrientationChange(): void {
+    this.checkOrientation();
   }
 
   pause(): void { this.paused = true; }

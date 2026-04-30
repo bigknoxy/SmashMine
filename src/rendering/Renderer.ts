@@ -256,14 +256,18 @@ export class Renderer {
     this.cameraController.addShake(intensity);
   }
 
+  /** Initialize camera position based on player (call when mission starts) */
+  initializeCameraPos(playerPos: { x: number; y: number; z: number }): void {
+    this.cameraController.initializeCameraPos(playerPos);
+  }
+
   render(): void {
     this.renderer.render(this.scene, this.camera);
   }
 
   resize(width: number, height: number): void {
-    this.camera.aspect = width / height;
+    // Let CameraController own aspect + FOV + projection updates
     this.cameraController.onResize(width, height, this.camera);
-    this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
   }
 }
