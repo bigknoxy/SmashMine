@@ -28,6 +28,9 @@ export class CameraController {
 
     // Apply raycast collision push-out to desiredPos
     this.applyCollision(playerVec, targetPos);
+    
+    // Store the desired position for lerping
+    this.desiredPos.copy(targetPos);
 
     // Smooth lerp toward desired position
     this.cameraPos.lerp(this.desiredPos, LERP_FACTOR);

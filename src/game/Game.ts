@@ -158,7 +158,17 @@ export class Game {
   }
 
   private loop(timestamp: number): void {
-    const delta = Math.min((timestamp - this.lastTime) / 1000, 0.1);
+    // Calculate delta time with a reasonable upper bound to prevent large jumps
+    let delta = (timestamp - this.lastTime) / 1000;
+    
+    // If this is the first frame or a large jump occurred (likely from tab switching, etc.)
+    // reset the timer to prevent physics from jumping forward too far
+    if (this.lastTime === 0 || delta > 0.1) {
+      this.lastTime = timestamp;
+      requestAnimationFrame((t) => this.loop(t));
+      return;
+    }
+    
     this.lastTime = timestamp;
 
     // Phase 2: Smash Juice - Hit-stop (freeze simulation ~50ms)
