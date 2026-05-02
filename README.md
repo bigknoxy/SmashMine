@@ -32,12 +32,38 @@
 
 ## Features
 
+### Core Gameplay
 - ⛏️ **Smash blocks** — Break glowing ore blocks to collect loot
 - 💎 **Auto-collect** — Loot flies to you automatically (magnet radius)
-- ⚡ **6 Upgrades** — Chain Break, Magnet Pet, Mega Swing, Double Jump, Treasure Vision, OP Mode
 - 🔄 **Instant replay** — Mission complete → upgrade → play again (30 seconds!)
 - 📱 **PWA** — Install as an app, works offline
 - 🎯 **No login** — Play immediately
+
+### Juice & Addictiveness (Phase 2)
+- 🎬 **Hit-stop** — 50ms freeze on smash for impact feel
+- 💬 **Floating text** — Damage numbers and combo indicators pop from blocks
+- 🔥 **Combo meter** — Build multipliers with 1.5s window, scales with size
+- 📅 **Daily seed** — Same quarry for everyone each day (shared experience)
+- 🔥 **Streak counter** — Track consecutive runs on home screen
+- ⏰ **Timer tension** — Color shifts yellow→red with pulse animation near time limit
+
+### Meta Progression (Phase 3)
+- 🪙 **Token economy** — Earn tokens from completed runs
+- ⛰️ **Mine depth** — Deeper levels unlock better ore generation
+- ⬆ **Meta upgrades** — Permanent upgrades that persist across runs:
+  - Pickaxe Tier (mine faster)
+  - Backpack Size (larger magnet radius)
+  - Fog Reduction (see further)
+  - Token Multiplier (earn more per run)
+- 🔄 **Prestige system** — Reset progress but keep meta progression
+- 📊 **Statistics tracking** — Total blocks smashed, games completed, best times
+
+### Mobile-First (Phase 1 & 4)
+- 📱 **Landscape lock** — Auto-locks to landscape with fullscreen API
+- 🎮 **Touch controls** — Virtual joystick + tap to smash
+- 📐 **Camera collision** — Raycast push-out prevents wall clipping
+- 🎯 **Spawn safety** — Player never spawns inside terrain
+- 🔄 **Smooth camera** — Lerp smoothing follows player naturally
 
 ### First Mission: Shard Quarry
 - **Goal:** Collect 25 Power Shards
@@ -53,6 +79,21 @@
 - **Vite** — Fast dev server + production builds
 - **vite-plugin-pwa** — Service worker + installability
 - **Bun** — Runtime and package manager
+
+## 🤖 Automation Skills
+
+This project uses AI automation skills stored in `.opencode/skills/`:
+
+### `/git-workflow` — Git Automation
+Auto-invoked after code changes. Automates `git pull --rebase origin main` → `git push origin main`.
+
+### `/pwa-verify` — Verification Suite
+Auto-invoked after code changes. Runs 5-step check: tests, TypeScript, build, CI status, deployment health.
+
+### `/mobile-test` — Mobile Testing
+Auto-invoked after touch/mobile changes. Tests on mobile viewports with Chromium.
+
+**These skills are invoked AUTOMATICALLY** — no need to manually trigger them.
 
 ---
 
@@ -82,28 +123,37 @@ bun run build
 ```
 src/
 ├── game/         # Core game logic
-│   ├── Game.ts          # Main game loop, state machine
-│   ├── Player.ts       # Physics, movement, upgrades
-│   ├── SmashSystem.ts  # Block breaking, chain breaks
-│   ├── LootSystem.ts  # Drops, auto-collect
-│   └── MissionManager.ts
-├── world/        # Voxel world generation
-│   ├── World.ts        # Block grid
-│   ├── BlockSpawner.ts # Quarry generation
-│   └── ChunkMesher.ts # Greedy meshing
+│   ├── Game.ts          # Main game loop, state machine, mission flow
+│   ├── Player.ts       # Physics, movement, smash, gravity
+│   ├── SaveSystem.ts   # Persistent save (tokens, upgrades, stats)
+│   ├── types.ts        # Type definitions (MetaUpgradeId, GameStatistics)
+│   └── world/        # Voxel world generation
+│       ├── World.ts        # Block grid (x,y,z)
+│       ├── BlockSpawner.ts # Quarry generation (mine depth support)
+│       └── ChunkMesher.ts # Greedy meshing for terrain
 ├── rendering/   # Three.js rendering
-│   ├── Renderer.ts       # WebGL setup
-│   ├── SceneBuilder.ts  # Terrain + blocks
-│   ├── CameraController.ts
-│   └── ParticleSystem.ts
+│   ├── Renderer.ts       # WebGL setup, camera, resize
+│   ├── SceneBuilder.ts  # Terrain + blocks (collision meshes)
+│   ├── CameraController.ts # Isometric camera, collision raycast, lerp
+│   └── ParticleSystem.ts # Smash particles, hit effects
 ├── ui/          # DOM UI overlay
-│   ├── TitleScreen.ts
-│   ├── HUD.ts
-│   ├── Joystick.ts
-│   └── RewardScreen.ts
+│   ├── TitleScreen.ts  # Title, daily seed display
+│   ├── HUD.ts          # In-game HUD (tokens, combo, timer)
+│   ├── Joystick.ts     # Virtual joystick (WASD + touch)
+│   ├── RewardScreen.ts # Mission complete (upgrades, tokens)
+│   └── UpgradeScreen.ts # Meta upgrades (pickaxe, backpack, fog)
 ├── audio/       # Web Audio
-├── data/        # Missions, upgrades, loot tables
+│   └── AudioEngine.ts  # Layered sound effects (smash, combo)
 └── styles/      # CSS
+    └── game.css       # All UI styles (landscape, mobile, HUD)
+```
+
+### Project Skills (`.opencode/skills/`)
+```
+.opencode/skills/
+├── git-workflow-automation/   # Auto git pull-rebase-push
+├── pwa-verification-suite/   # 5-step verification loop
+└── mobile-sandbox-test/       # Mobile PWA testing (no-sandbox)
 ```
 
 ---

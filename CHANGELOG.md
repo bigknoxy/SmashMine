@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-04-30
+
+### Added (Phase 4: Camera & Orientation Fixes)
+- **Camera Initialization**: Camera now initializes from player spawn position.
+- **Smooth Camera**: Restored lerp smoothing (LERP_FACTOR=0.1) for natural camera follow.
+- **Portrait FOV Cap**: Portrait mode FOV now capped at 90° to prevent fish-eye distortion.
+- **Landscape Lock**: Added `screen.orientation.lock('landscape')` with fullscreen API.
+- **Orientation Handler**: Added `onOrientationChange()` handler in Game.ts for all states.
+- **Raycaster Optimization**: Reused Raycaster instance to reduce GC pressure.
+
+### Fixed
+- **Character stuck in upper-right corner**: Fixed camera offset and FOV issues in portrait mode.
+- **Portrait mode showing**: Added proper landscape lock via JavaScript API (not just meta tags).
+- **checkOrientation()**: Expanded to all game states (not just TITLE state).
+- **Redundant calls**: Removed duplicate `camera.aspect`/`updateProjectionMatrix()` in Renderer.resize().
+- **Modern API**: Replaced deprecated `orientationchange` event with `screen.orientation.addEventListener`.
+- **Retry logic**: Moved `orientationLockRequested` flag to after successful lock.
+
+### Added (Project Skills)
+- **git-workflow-automation**: Automates pull-rebase-push cycle for direct main commits.
+- **pwa-verification-suite**: SmashMine-specific 5-step verification (tests, TypeScript, build, CI, deployment).
+- **mobile-sandbox-test**: Mobile PWA testing with agent-browser, vision-capable testing via ollama-cloud.
+
+---
+
 ## [0.3.0] - 2026-04-29
 
 ### Added (Phase 3: Meta Progression)
