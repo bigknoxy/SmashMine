@@ -8,7 +8,10 @@ dist/
 Thumbs.db
 *.log
 .playwright-mcp/
-.opencode/
+# Ignore everything in .opencode EXCEPT skills/
+.opencode/*
+!.opencode/skills
+!.opencode/skills/**
 .learnings/
 work/
 tasks/
