@@ -37,7 +37,11 @@ export function show(progress: MissionProgress, onUpgrade: (id: UpgradeId) => vo
   // Phase 3: Show tokens earned
   if (TOKEN_DISPLAY) {
     const baseTokens = Math.floor(progress.shards * 2);
-    const timeBonus = Math.max(0, Math.floor((60 - progress.elapsed) * 10));
+    // Use the mission's time limit if possible, otherwise default to 60
+    // However, MissionProgress doesn't contain the time limit, so use a default
+    // The actual token awarding was already handled in Game.ts where currentMission is available
+    const timeLimit = 60; // This is just for display purposes
+    const timeBonus = Math.max(0, Math.floor((timeLimit - progress.elapsed) * 10));
     const totalTokens = baseTokens + timeBonus;
     TOKEN_DISPLAY.textContent = `Tokens: +${totalTokens} 🪙`;
     TOKEN_DISPLAY.classList.remove('hidden');
@@ -67,6 +71,19 @@ export function show(progress: MissionProgress, onUpgrade: (id: UpgradeId) => vo
         if (id && upgradeCallback) upgradeCallback(id);
       });
     });
+  }
+  
+  // Ensure the buttons are properly wired up
+  if (REPLAY_BTN && replayCallback) {
+    REPLAY_BTN.onclick = () => {
+      if (replayCallback) replayCallback();
+    };
+  }
+  
+  if (HOME_BTN && homeCallback) {
+    HOME_BTN.onclick = () => {
+      if (homeCallback) homeCallback();
+    };
   }
 }
 

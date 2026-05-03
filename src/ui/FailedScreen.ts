@@ -15,6 +15,19 @@ export function show(progress: MissionProgress): void {
   if (FAILED_LOOT_SUMMARY) {
     FAILED_LOOT_SUMMARY.innerHTML = renderLootHTML(progress, 'Loot Collected:');
   }
+  
+  // Set up buttons when the screen is shown
+  if (RETRY_BTN && retryCallback) {
+    RETRY_BTN.onclick = () => {
+      if (retryCallback) retryCallback();
+    };
+  }
+  
+  if (HOME_BTN && homeCallback) {
+    HOME_BTN.onclick = () => {
+      if (homeCallback) homeCallback();
+    };
+  }
 }
 
 export function hide(): void {

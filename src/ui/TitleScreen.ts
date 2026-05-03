@@ -69,9 +69,10 @@ export class TitleScreen {
   
   private initializeAudio() {
     if (typeof AudioContext !== 'undefined') {
-      const audioContext = new AudioContext();
-      if (audioContext.state === 'suspended') {
-        audioContext.resume();
+      // Store reference to prevent garbage collection
+      (window as any).audioContext = new AudioContext();
+      if ((window as any).audioContext.state === 'suspended') {
+        (window as any).audioContext.resume();
       }
     }
   }

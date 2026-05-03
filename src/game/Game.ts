@@ -463,7 +463,8 @@ export class Game {
         FailedScreen.show(this.missionManager.getProgress());
         break;
       case GameState.UPGRADE_PICK:
-        // Handled after reward screen timeout
+        // Show mission select for upgrade picking
+        this.showMissionSelect();
         break;
     }
   }
@@ -583,6 +584,18 @@ export class Game {
       this.pickUpgrade(upgradeId);
     });
 
+    // Set up callbacks for the reward screen buttons (these are typically set up elsewhere, 
+    // but ensure they work properly when the user selects an upgrade)
+    RewardScreen.onReplayClick(() => {
+      RewardScreen.hide();
+      if (this.currentMission) this.startMission(this.currentMission);
+    });
+
+    RewardScreen.onHomeClick(() => {
+      RewardScreen.hide();
+      this.goToHome();
+    });
+
     setTimeout(() => {
       this.gameState = GameState.UPGRADE_PICK;
       this.applyStateToUI(this.gameState);
@@ -596,6 +609,19 @@ export class Game {
     this.applyStateToUI(this.gameState);
 
     const progress = this.missionManager.getProgress();
+    
+    // Set up callbacks for the failed screen buttons (these are typically set up elsewhere,
+    // but ensure they work properly)
+    FailedScreen.onRetryClick(() => {
+      FailedScreen.hide();
+      if (this.currentMission) this.startMission(this.currentMission);
+    });
+
+    FailedScreen.onHomeClick(() => {
+      FailedScreen.hide();
+      this.goToHome();
+    });
+    
     FailedScreen.show(progress);
   }
 
