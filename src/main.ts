@@ -59,11 +59,12 @@ canvas.height = window.innerHeight;
 canvas.addEventListener('pointerdown', (e) => {
   // Check if the click is NOT on the joystick or other UI elements
   const isOnUIElement = e.target !== canvas && (
-    e.target instanceof Element && 
-    (e.target.closest('#joystick-zone') || 
-     e.target.closest('#joystick-base') || 
+    e.target instanceof Element &&
+    (e.target.closest('#joystick-zone') ||
+     e.target.closest('#joystick-base') ||
      e.target.closest('#joystick-knob') ||
      e.target.closest('#smash-btn') ||
+     e.target.closest('#jump-btn') ||
      e.target.closest('#special-btn'))
   );
   

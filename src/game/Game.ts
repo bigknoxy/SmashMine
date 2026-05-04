@@ -228,7 +228,6 @@ export class Game {
 
     if (this.inputState.smash && this.smashCooldown <= 0) {
       this.inputState.smash = false;
-      this.smashCooldown = 0.2;
       this.handleSmash();
     }
     if (this.inputState.jump) {
@@ -364,28 +363,28 @@ export class Game {
 
     this.tutorialManager.onAction('smash');
 
-    // Phase 2: Smash Juice - Hit-stop (freeze simulation ~50ms)
-    this.hitStopTimer = 0.05;
-
-    // Phase 2: Combo meter update
-    const now = performance.now();
-    const comboWindow = 1500; // 1.5s window
-    if (now - this.lastSmashTime <= comboWindow) {
-      this.comboCount = Math.min(this.comboCount + 1, 20); // Cap combo count
-    } else {
-      this.comboCount = 0;
-    }
-    this.lastSmashTime = now;
-    HUD.updateCombo(this.comboCount, comboWindow);
-
     const broken = this.smashSystem.smash(this.world, target, this.player);
     if (broken && broken.length > 0) {
+      // Phase 2: Smash Juice - Hit-stop (freeze simulation ~50ms)
+      this.hitStopTimer = 0.05;
+      this.smashCooldown = 0.2;
+
+      // Phase 2: Combo meter update
+      const now = performance.now();
+      const comboWindow = 1500;
+      if (now - this.lastSmashTime <= comboWindow) {
+        this.comboCount = Math.min(this.comboCount + 1, 20);
+      } else {
+        this.comboCount = 1;
+      }
+      this.lastSmashTime = now;
+      HUD.updateCombo(this.comboCount, comboWindow);
+
       this.audioEngine.playSmash();
       this.renderer.addShake(0.15);
       this.particleSystem.emitBurst(target, '#ff4400');
 
-      // Phase 2: Smash Juice - Floating text +1 (use combo count for display)
-      const displayText = this.comboCount > 0 ? `+${this.comboCount + 1}` : '+1';
+      const displayText = this.comboCount > 1 ? `+${this.comboCount}` : '+1';
       this.floatingTexts.push({
         x: target.x + 0.5,
         y: target.y + 1.0,
@@ -401,10 +400,9 @@ export class Game {
       }
       this.terrainDirty = true;
       telemetry.lootCollected += broken.length;
-      
-      // Phase3: Track blocks smashed and update best combo
+
       this.blocksSmashed += broken.length;
-      if (this.comboCount > 0) {
+      if (this.comboCount > 1) {
         const stats = saveSystem.getStatistics();
         if (this.comboCount > stats.bestCombo) {
           saveSystem.updateStatistics({ bestCombo: this.comboCount });
@@ -429,7 +427,7 @@ export class Game {
     document.getElementById('rotate-prompt')?.classList.add('hidden');
 
     // Toggle gameplay UI (HUD, controls)
-    const isPlaying = state === GameState.PLAYING || state === GameState.MISSION_INTRO;
+    const isPlaying = state === GameState.PLAYING;
     if (isPlaying) {
       HUD.show();
       document.getElementById('smash-btn')?.classList.remove('hidden');
@@ -512,19 +510,16 @@ export class Game {
 
     this.missionManager.startMission(mission);
 
-    this.titleScreen.hide();
-    MissionSelect.hide();
-    HUD.show();
-
-    document.getElementById('smash-btn')?.classList.remove('hidden');
-    document.getElementById('jump-btn')?.classList.remove('hidden');
-    document.getElementById('joystick-zone')?.classList.remove('hidden');
-
     this.gameState = GameState.MISSION_INTRO;
     this.applyStateToUI(this.gameState);
     showIntro(mission).then(() => {
+      this.inputState.smash = false;
+      this.inputState.special = false;
+      this.inputState.jump = false;
       this.gameState = GameState.PLAYING;
       this.applyStateToUI(this.gameState);
+    }).catch(() => {
+      this.goToHome();
     });
   }
 
@@ -555,9 +550,11 @@ export class Game {
     const timeLimit = this.currentMission!.timeLimit;
     const baseTokens = Math.floor(progress.shards * 2);
     const timeBonus = Math.max(0, Math.floor((timeLimit - progress.elapsed) * 10));
-    const totalTokens = baseTokens + timeBonus;
+    const rawTokens = baseTokens + timeBonus;
+    const tokenMultiplier = 1 + (saveSystem.getData().metaUpgrades?.token_multiplier ?? 0) * 0.25;
+    const displayTokens = Math.round(rawTokens * tokenMultiplier);
 
-    saveSystem.addTokens(totalTokens);
+    saveSystem.addTokens(rawTokens);
 
     const playTime = this.missionStartTime > 0 ? (performance.now() - this.missionStartTime) / 1000 : 0;
     saveSystem.updateStatistics({
@@ -575,7 +572,7 @@ export class Game {
     // Pass actual timeLimit and tokens so RewardScreen displays correct values
     RewardScreen.show(progress, (upgradeId: UpgradeId) => {
       this.pickUpgrade(upgradeId);
-    }, timeLimit, totalTokens);
+    }, timeLimit, displayTokens);
   }
 
   private missionFailed(): void {

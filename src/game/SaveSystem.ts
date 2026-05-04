@@ -278,7 +278,12 @@ export class SaveSystem {
     if (!this.data.statistics) {
       this.data.statistics = { totalBlocksSmashed: 0, bestCombo: 0, totalPlayTime: 0, totalTokensEarned: 0, deepestMineLevel: 1 };
     }
-    Object.assign(this.data.statistics, { ...this.data.statistics, ...stats });
+    const s = this.data.statistics;
+    if (stats.totalBlocksSmashed) s.totalBlocksSmashed += stats.totalBlocksSmashed;
+    if (stats.totalPlayTime) s.totalPlayTime += stats.totalPlayTime;
+    if (stats.totalTokensEarned) s.totalTokensEarned += stats.totalTokensEarned;
+    if (stats.bestCombo && stats.bestCombo > s.bestCombo) s.bestCombo = stats.bestCombo;
+    if (stats.deepestMineLevel && stats.deepestMineLevel > s.deepestMineLevel) s.deepestMineLevel = stats.deepestMineLevel;
     this.markDirty();
   }
   
@@ -329,6 +334,8 @@ export class SaveSystem {
   
   // Phase 2: Streak - Check if replay within 10s for streak counter
   updateStreakOnReplay(): boolean {
+    // Only count streaks for replays, not the first mission ever
+    if (this.data.missionsCompleted === 0) return false;
     const now = Date.now();
     if (now - this.data.lastPlayed <= 10000) { // 10 seconds
       this.data.streak += 1;

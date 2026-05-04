@@ -184,6 +184,7 @@ export class Joystick {
         break;
       case 'Space':
         this.inputState.jump = false;
+        this.inputState.smash = false;
         break;
       case 'KeyE':
         this.inputState.special = false;

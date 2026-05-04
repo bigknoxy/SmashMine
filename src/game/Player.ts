@@ -37,7 +37,7 @@ export class Player {
   applyUpgrade(id: UpgradeId): void { this.upgrades.set(id, (this.upgrades.get(id) || 0) + 1); }
 
   resetPosition(world: World): void {
-    this.position = { x: 8, y: 7, z: 8 };
+    this.position = { x: world.size.x / 2, y: world.size.y - 2, z: world.size.z / 2 };
     this.velocity = { x: 0, y: 0, z: 0 };
     this.onGround = true;
     this.ensurePlayerNotInsideTerrain(world);
