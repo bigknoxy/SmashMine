@@ -64,7 +64,6 @@ export class Game {
   // Phase3: Meta Progression
   private blocksSmashed = 0;
   private missionStartTime = 0;
-  private upgradeTimeout: ReturnType<typeof setTimeout> | null = null;
 
 
   constructor(canvas: HTMLCanvasElement) {
@@ -107,7 +106,6 @@ export class Game {
   }
 
   private goToHome(): void {
-    if (this.upgradeTimeout) { clearTimeout(this.upgradeTimeout); this.upgradeTimeout = null; }
     this.gameState = GameState.TITLE;
     this.applyStateToUI(this.gameState);
   }
@@ -454,13 +452,12 @@ export class Game {
         // Intro is shown via showIntro() separately
         break;
       case GameState.MISSION_COMPLETE:
-        RewardScreen.show(this.missionManager.getProgress(), (upg) => this.pickUpgrade(upg));
+        // RewardScreen shown directly by missionComplete() with full params
         break;
       case GameState.MISSION_FAILED:
         FailedScreen.show(this.missionManager.getProgress());
         break;
       case GameState.UPGRADE_PICK:
-        // Show mission select for upgrade picking
         this.showMissionSelect();
         break;
     }
@@ -479,7 +476,6 @@ export class Game {
   private currentMission: MissionDef | null = null;
 
   startMission(mission: MissionDef): void {
-    if (this.upgradeTimeout) { clearTimeout(this.upgradeTimeout); this.upgradeTimeout = null; }
     telemetry.missionStarted++;
     const streakContinued = saveSystem.updateStreakOnReplay();
     if (streakContinued) {
@@ -580,12 +576,6 @@ export class Game {
     RewardScreen.show(progress, (upgradeId: UpgradeId) => {
       this.pickUpgrade(upgradeId);
     }, timeLimit, totalTokens);
-
-    this.upgradeTimeout = setTimeout(() => {
-      this.upgradeTimeout = null;
-      this.gameState = GameState.UPGRADE_PICK;
-      this.applyStateToUI(this.gameState);
-    }, 1500);
   }
 
   private missionFailed(): void {
@@ -608,12 +598,11 @@ export class Game {
   }
 
   private pickUpgrade(upgradeId: UpgradeId): void {
-    if (this.upgradeTimeout) { clearTimeout(this.upgradeTimeout); this.upgradeTimeout = null; }
     this.upgradeSystem.applyUpgrade(upgradeId, this.player);
     this.audioEngine.playUpgrade();
     telemetry.upgradesPicked++;
-    RewardScreen.hide();
-    this.showMissionSelect();
+    this.gameState = GameState.UPGRADE_PICK;
+    this.applyStateToUI(this.gameState);
   }
 
   onCanvasClick(e: PointerEvent): void {
