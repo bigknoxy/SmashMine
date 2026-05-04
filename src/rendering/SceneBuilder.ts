@@ -1,10 +1,9 @@
-import { Mesh, MeshLambertMaterial, InstancedMesh, Object3D, BoxGeometry, Color, AmbientLight, DirectionalLight, BufferGeometry, Float32BufferAttribute } from 'three';
+import { Mesh, MeshLambertMaterial, InstancedMesh, Object3D, BoxGeometry, Color } from 'three';
 import type { Scene } from 'three';
 import type { World } from '../world/World.js';
 import { BLOCK_DEFS } from '../world/BlockTypes.js';
 import { buildMesh } from '../world/ChunkMesher.js';
 import type { BlockType, Vec3 } from '../game/types.js';
-import { vec3ToString } from '../world/Coordinate.js';
 
 export function buildScene(world: World, scene: Scene): void {
   const terrainGeometry = buildMesh(world);

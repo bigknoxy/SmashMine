@@ -15,7 +15,7 @@ let upgradeCallback: ((upgradeId: UpgradeId) => void) | null = null;
 let replayCallback: (() => void) | null = null;
 let homeCallback: (() => void) | null = null;
 
-export function show(progress: MissionProgress, onUpgrade: (id: UpgradeId) => void): void {
+export function show(progress: MissionProgress, onUpgrade: (id: UpgradeId) => void, timeLimit?: number, totalTokens?: number): void {
   upgradeCallback = onUpgrade;
   if (REWARD_SCREEN) REWARD_SCREEN.classList.remove('hidden');
 
@@ -23,7 +23,6 @@ export function show(progress: MissionProgress, onUpgrade: (id: UpgradeId) => vo
     LOOT_SUMMARY.innerHTML = renderLootHTML(progress);
   }
 
-  // Phase 2: Streak - Show streak counter
   const streak = saveSystem.getStreak();
   if (STREAK_DISPLAY) {
     if (streak >= 2) {
@@ -34,16 +33,9 @@ export function show(progress: MissionProgress, onUpgrade: (id: UpgradeId) => vo
     }
   }
 
-  // Phase 3: Show tokens earned
   if (TOKEN_DISPLAY) {
-    const baseTokens = Math.floor(progress.shards * 2);
-    // Use the mission's time limit if possible, otherwise default to 60
-    // However, MissionProgress doesn't contain the time limit, so use a default
-    // The actual token awarding was already handled in Game.ts where currentMission is available
-    const timeLimit = 60; // This is just for display purposes
-    const timeBonus = Math.max(0, Math.floor((timeLimit - progress.elapsed) * 10));
-    const totalTokens = baseTokens + timeBonus;
-    TOKEN_DISPLAY.textContent = `Tokens: +${totalTokens} 🪙`;
+    const tokens = totalTokens ?? Math.floor(progress.shards * 2) + Math.max(0, Math.floor(((timeLimit ?? 60) - progress.elapsed) * 10));
+    TOKEN_DISPLAY.textContent = `Tokens: +${tokens} 🪙`;
     TOKEN_DISPLAY.classList.remove('hidden');
   }
 

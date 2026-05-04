@@ -60,15 +60,11 @@ export class Game {
    
    // Phase 2: Daily Seed
    private daySeed = '';
-   // Track streak across sessions
-   private lastPlayedSession: number = 0;
-   
-   // Phase 2: Streak (Saved) - tracked in SaveSystem
 
   // Phase3: Meta Progression
   private blocksSmashed = 0;
-  private sessionStartTime = 0;
   private missionStartTime = 0;
+  private upgradeTimeout: ReturnType<typeof setTimeout> | null = null;
 
 
   constructor(canvas: HTMLCanvasElement) {
@@ -111,10 +107,9 @@ export class Game {
   }
 
   private goToHome(): void {
+    if (this.upgradeTimeout) { clearTimeout(this.upgradeTimeout); this.upgradeTimeout = null; }
     this.gameState = GameState.TITLE;
     this.applyStateToUI(this.gameState);
-    // Clean up any active mission state if needed
-    // The startMission method handles re-init of world/player
   }
 
   start(): void {
@@ -196,7 +191,7 @@ export class Game {
         this.audioEngine.playTimerTick();
       }
       // Near-miss messaging on 24/25 shards
-      if (!progress.surpriseTriggered && progress.shards >= 24 && this.missionManager.getTargetShards() === 25) {
+      if (!progress.surpriseTriggered && progress.shards >= this.missionManager.getTargetShards() - 1 && progress.shards < this.missionManager.getTargetShards()) {
         HUD.showNearMiss();
       }
     }
@@ -479,29 +474,30 @@ export class Game {
     }
   }
 
-  private hideGameplayUI(): void {
-    HUD.hide();
-    document.getElementById('smash-btn')?.classList.add('hidden');
-    document.getElementById('joystick-zone')?.classList.add('hidden');
-  }
-
   private currentMission: MissionDef | null = null;
 
   startMission(mission: MissionDef): void {
+    if (this.upgradeTimeout) { clearTimeout(this.upgradeTimeout); this.upgradeTimeout = null; }
     telemetry.missionStarted++;
-    // Phase 2: Streak - Track when replaying within 10s
     const streakContinued = saveSystem.updateStreakOnReplay();
     if (streakContinued) {
       console.log(`🔥 Streak: ${saveSystem.getStreak()} consecutive runs!`);
     }
-    
-    // Phase 2: Streak - Display streak counter
+
     this.updateStreakDisplay();
-    
+
     this.currentMission = mission;
-    // Phase 3: Apply mine depth to world generation
+
+    // Reset per-mission state
+    this.comboCount = 0;
+    this.lastSmashTime = 0;
+    this.hitStopTimer = 0;
+    this.smashCooldown = 0;
+    this.floatingTexts = [];
+    const container = document.getElementById('floating-texts');
+    if (container) container.innerHTML = '';
+
     const mineDepth = saveSystem.getMineDepth();
-    // Phase 2: Daily seed - pass daily seed for consistent daily worlds
     this.world = this.renderer.initWorld(mission.id, this.daySeed, mineDepth);
     this.player = new Player(this.world);
     this.lootSystem = new LootSystem(this.world);
@@ -555,48 +551,35 @@ export class Game {
     this.applyStateToUI(this.gameState);
 
     saveSystem.incrementMissions();
-    
-    // Phase3: Calculate token reward
+
     const progress = this.missionManager.getProgress();
-    const baseTokens = Math.floor(progress.shards * 2); // 2 tokens per shard
-    const timeBonus = Math.max(0, Math.floor((this.currentMission!.timeLimit - progress.elapsed) * 10)); // 10 tokens per second remaining
+    const timeLimit = this.currentMission!.timeLimit;
+    const baseTokens = Math.floor(progress.shards * 2);
+    const timeBonus = Math.max(0, Math.floor((timeLimit - progress.elapsed) * 10));
     const totalTokens = baseTokens + timeBonus;
-    
+
     saveSystem.addTokens(totalTokens);
-    
-    // Phase3: Update statistics
+
     const playTime = this.missionStartTime > 0 ? (performance.now() - this.missionStartTime) / 1000 : 0;
     saveSystem.updateStatistics({
       totalBlocksSmashed: this.blocksSmashed,
       totalPlayTime: playTime,
     });
-    
-    // Phase3: Increase mine depth on successful completion
+
     const newDepth = saveSystem.getMineDepth() + 1;
     saveSystem.setMineDepth(newDepth);
-    
+
     if (saveSystem.needsSave()) saveSystem.save();
 
-    // Phase 2: Daily Seed - Record personal best
     saveSystem.recordBest(progress.shards, progress.elapsed);
 
+    // Pass actual timeLimit and tokens so RewardScreen displays correct values
     RewardScreen.show(progress, (upgradeId: UpgradeId) => {
       this.pickUpgrade(upgradeId);
-    });
+    }, timeLimit, totalTokens);
 
-    // Set up callbacks for the reward screen buttons (these are typically set up elsewhere, 
-    // but ensure they work properly when the user selects an upgrade)
-    RewardScreen.onReplayClick(() => {
-      RewardScreen.hide();
-      if (this.currentMission) this.startMission(this.currentMission);
-    });
-
-    RewardScreen.onHomeClick(() => {
-      RewardScreen.hide();
-      this.goToHome();
-    });
-
-    setTimeout(() => {
+    this.upgradeTimeout = setTimeout(() => {
+      this.upgradeTimeout = null;
       this.gameState = GameState.UPGRADE_PICK;
       this.applyStateToUI(this.gameState);
     }, 1500);
@@ -609,23 +592,20 @@ export class Game {
     this.applyStateToUI(this.gameState);
 
     const progress = this.missionManager.getProgress();
-    
-    // Set up callbacks for the failed screen buttons (these are typically set up elsewhere,
-    // but ensure they work properly)
-    FailedScreen.onRetryClick(() => {
-      FailedScreen.hide();
-      if (this.currentMission) this.startMission(this.currentMission);
+
+    // Track stats from failed runs too
+    const playTime = this.missionStartTime > 0 ? (performance.now() - this.missionStartTime) / 1000 : 0;
+    saveSystem.updateStatistics({
+      totalBlocksSmashed: this.blocksSmashed,
+      totalPlayTime: playTime,
     });
 
-    FailedScreen.onHomeClick(() => {
-      FailedScreen.hide();
-      this.goToHome();
-    });
-    
-    FailedScreen.show(progress);
+    // Save loot collected during failed run
+    if (saveSystem.needsSave()) saveSystem.save();
   }
 
   private pickUpgrade(upgradeId: UpgradeId): void {
+    if (this.upgradeTimeout) { clearTimeout(this.upgradeTimeout); this.upgradeTimeout = null; }
     this.upgradeSystem.applyUpgrade(upgradeId, this.player);
     this.audioEngine.playUpgrade();
     telemetry.upgradesPicked++;

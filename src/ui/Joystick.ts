@@ -1,5 +1,4 @@
 import { InputState } from '../game/types.js';
-import { TutorialManager } from '../game/TutorialManager.js';
 
 const KNOB_SIZE_PX = 50;
 const KNOB_MIN_SIZE_PX = 40;

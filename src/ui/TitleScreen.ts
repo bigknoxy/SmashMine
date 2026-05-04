@@ -24,9 +24,8 @@ export class TitleScreen {
   }
   
   private showDailySeed() {
-    const title = document.getElementById('game-title');
-    if (title) {
-      // Phase 2: Daily Seed - Show "Today's Quarry" on title screen
+    const title = document.querySelector('.game-title');
+    if (title && !document.getElementById('daily-seed-text')) {
       const dailyTitle = document.createElement('div');
       dailyTitle.id = 'daily-seed-text';
       dailyTitle.textContent = `Today's Quarry: ${this.todayDate}`;
@@ -34,46 +33,34 @@ export class TitleScreen {
       title.appendChild(dailyTitle);
     }
   }
-  
+
   show() {
     if (this.shown) return;
     this.element.classList.remove('hidden');
     this.shown = true;
+    // Re-wire start button in case it was removed
+    this.wireStartButton();
   }
-  
+
   hide() {
     if (!this.shown) return;
     this.element.classList.add('hidden');
     this.shown = false;
   }
-  
+
   onStart(callback: () => void) {
     this.callback = callback;
-    
+    this.wireStartButton();
+  }
+
+  private wireStartButton(): void {
     const startBtn = document.getElementById('start-btn');
     if (!startBtn) return;
-    
-    const handleStart = (e: PointerEvent) => {
-      if (!this.initialized) {
-        this.initializeAudio();
-        this.initialized = true;
-      }
-      if (this.callback) {
-        this.callback();
-      }
-      startBtn.removeEventListener('pointerdown', handleStart);
+
+    const handleStart = () => {
+      if (this.callback) this.callback();
     };
-    
-    startBtn.addEventListener('pointerdown', handleStart);
-  }
-  
-  private initializeAudio() {
-    if (typeof AudioContext !== 'undefined') {
-      // Store reference to prevent garbage collection
-      (window as any).audioContext = new AudioContext();
-      if ((window as any).audioContext.state === 'suspended') {
-        (window as any).audioContext.resume();
-      }
-    }
+
+    startBtn.onpointerdown = handleStart;
   }
 }

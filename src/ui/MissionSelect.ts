@@ -40,7 +40,7 @@ function renderMissions(): void {
     const isDone = index < completedCount;
 
     html += `
-      <div class="mission-card ${isLocked ? 'locked' : ''}" data-index="${index}">
+      <div class="mission-card ${isLocked ? 'locked' : ''} ${isNew ? 'next-mission' : ''}" data-index="${index}">
         <div class="mission-info">
           <span class="m-name">${m.name} ${isLocked ? '🔒' : ''}</span>
           <span class="m-goal">${m.goal}</span>

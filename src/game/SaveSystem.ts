@@ -97,16 +97,17 @@ export class SaveSystem {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        const parsed = JSON.parse(stored) as SaveData;
-        if (parsed.version === CURRENT_VERSION) {
-          // Merge with defaults to handle new fields
-          this.data = {
-            ...defaultData,
-            ...parsed,
-            upgrades: { ...defaultData.upgrades, ...parsed.upgrades },
-            shopItems: { ...defaultData.shopItems, ...parsed.shopItems },
-          };
-        }
+        const parsed = JSON.parse(stored) as Partial<SaveData>;
+        // Always merge with defaults to handle new fields regardless of version
+        this.data = {
+          ...defaultData,
+          ...parsed,
+          version: CURRENT_VERSION,
+          upgrades: { ...defaultData.upgrades, ...(parsed.upgrades || {}) },
+          shopItems: { ...defaultData.shopItems, ...(parsed.shopItems || {}) },
+          metaUpgrades: { ...defaultData.metaUpgrades, ...(parsed.metaUpgrades || {}) },
+          statistics: { ...defaultData.statistics, ...(parsed.statistics || {}) },
+        };
       }
     } catch (e) {
       console.warn('Failed to load save data:', e);
@@ -134,10 +135,6 @@ export class SaveSystem {
   reset(): void {
     this.data = { ...defaultData, lastPlayed: Date.now() };
     this.save();
-  }
-
-  getPrestigeBonus(): number {
-    return this.data.prestigeLevel;
   }
 
   getShards(): number {
@@ -182,10 +179,6 @@ export class SaveSystem {
     this.markDirty();
     this.save();
     return true;
-  }
-
-  canUpgrade(id: UpgradeId, maxLevel: number): boolean {
-    return (this.data.upgrades[id] ?? 0) < maxLevel;
   }
 
   purchaseUpgrade(id: UpgradeId, cost: number): boolean {
@@ -291,24 +284,6 @@ export class SaveSystem {
   
   getStatistics(): SaveData['statistics'] {
     return this.data.statistics;
-  }
-  
-  // Phase 3: Prestige - enhanced to keep meta progression
-  prestige(): void {
-    const bonus = Math.floor(this.data.missionsCompleted / 5) + 1;
-    const tokens = this.data.tokens;
-    const metaUpgrades = { ...this.data.metaUpgrades };
-    const statistics = { ...this.data.statistics };
-    const mineDepth = this.data.mineDepth;
-    
-    this.data = { ...defaultData, lastPlayed: Date.now() };
-    this.data.prestigeLevel += 1;
-    this.data.tokens = tokens; // Keep tokens
-    this.data.metaUpgrades = metaUpgrades; // Keep meta upgrades
-    this.data.statistics = statistics; // Keep statistics
-    this.data.mineDepth = mineDepth; // Keep mine depth
-    this.markDirty();
-    this.save();
   }
   
   // Phase 2: Daily seed - Get today's date string (YYYY-MM-DD)

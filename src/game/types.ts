@@ -45,15 +45,6 @@ export interface MetaUpgradeDef {
   costPerLevel: number;
 }
 
-export interface GameStatistics {
-  totalBlocksSmashed: number;
-  bestCombo: number;
-  totalPlayTime: number; // in seconds
-  totalTokensEarned: number;
-  deepestMineLevel: number;
-  missionsCompleted: number;
-}
-
 export type LootType =
   | 'coins'
   | 'power_shards'
@@ -63,13 +54,6 @@ export type LootType =
   | 'op_relics';
 
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
-
-export interface PlayerState {
-  position: Vec3;
-  velocity: Vec3;
-  onGround: boolean;
-  upgrades: Map<UpgradeId, number>;
-}
 
 export interface UpgradeDef {
   id: UpgradeId;
@@ -118,13 +102,6 @@ export interface InputState {
   smash: boolean;
   special: boolean;
   jump: boolean;
-}
-
-export interface GameCallbacks {
-  onStartMission: () => void;
-  onMissionComplete: () => void;
-  onUpgradePick: (upgradeId: UpgradeId) => void;
-  onReplay: () => void;
 }
 
 export const RARITY_COLORS: Record<Rarity, string> = {

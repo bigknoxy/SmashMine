@@ -2,7 +2,6 @@ import { BufferGeometry, Float32BufferAttribute } from 'three';
 import type { World } from './World.js';
 import { BLOCK_DEFS } from './BlockTypes.js';
 import type { Vec3 } from '../game/types.js';
-import { vec3ToString } from './Coordinate.js';
 
 function hexToRgb(hex: string): [number, number, number] {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);

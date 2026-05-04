@@ -1,132 +1,74 @@
----
+# CLAUDE.md
 
-Default to using Bun instead of Node.js.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-- Use `bun <file>` instead of `node <file>` or `ts-node <file>`
-- Use `bun test` instead of `jest` or `vitest`
-- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
-- Bun automatically loads .env, so don't use dotenv.
+## Build/Run/Test Commands
 
-## APIs
-
-- `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
-- `bun:sqlite` for SQLite. Don't use `better-sqlite3`.
-- `Bun.redis` for Redis. Don't use `ioredis`.
-- `Bun.sql` for Postgres. Don't use `pg` or `postgres.js`.
-- `WebSocket` is built-in. Don't use `ws`.
-- Prefer `Bun.file` over `node:fs`'s readFile/writeFile
-- Bun.$`ls` instead of execa.
-
-## Testing
-
-Use `bun test` to run tests.
-
-```ts#index.test.ts
-import { test, expect } from "bun:test";
-
-test("hello world", () => {
-  expect(1).toBe(1);
-});
+```bash
+bun install                        # Install dependencies
+bun run dev                        # Dev server (Vite, HMR, port 5173)
+bun run build                      # Production build (Vite)
+bun run test                       # Run all tests (vitest run)
+bun run test -- --reporter=verbose # Tests with detailed output
+npx tsc --noEmit                   # TypeScript type-check only
 ```
 
-## Frontend
+## Project Context
 
-Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
+SmashMine is a **mobile-first PWA game** — a single-page TypeScript app using Three.js for 3D rendering. No backend; deployed to GitHub Pages at `/SmashMine/`. Uses Vite + vite-plugin-pwa for build and service worker. Bun as package manager/runtime, but the build toolchain is Vite/Vitest (not Bun's bundler).
 
-Server:
+## Architecture: State Machine
 
-```ts#index.ts
-import index from "./index.html"
+Everything is driven by `GameState` (defined in `src/game/GameState.ts`):
 
-Bun.serve({
-  routes: {
-    "/": index,
-    "/api/users/:id": {
-      GET: (req) => {
-        return new Response(JSON.stringify({ id: req.params.id }));
-      },
-    },
-  },
-  // optional websocket support
-  websocket: {
-    open: (ws) => {
-      ws.send("Hello, world!");
-    },
-    message: (ws, message) => {
-      ws.send(message);
-    },
-    close: (ws) => {
-      // handle close
-    }
-  },
-  development: {
-    hmr: true,
-    console: true,
-  }
-})
+```
+TITLE → MISSION_INTRO → PLAYING → MISSION_COMPLETE → UPGRADE_PICK → (loop back to PLAYING)
+                               ↘ MISSION_FAILED → (retry or TITLE)
 ```
 
-HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. `<link>` tags can point to stylesheets and Bun's CSS bundler will bundle.
+- `Game.update(delta)` switches on `gameState` — only `PLAYING` runs game logic.
+- `applyStateToUI(state)` is the single place that maps state to UI visibility. It hides all overlays, then shows only what's relevant for the current state. Gameplay UI (HUD, joystick, smash button) is only visible during `PLAYING` and `MISSION_INTRO`.
+- `Game.startMission()` resets the world, player, loot system, and renders fresh terrain. It's called for both new missions and replays.
+- `Game.goToHome()` resets state to `TITLE`; the title screen's "TAP TO START" button calls `showMissionSelect()`.
 
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
-```
+## Core Systems (all instantiated in Game constructor)
 
-With the following `frontend.tsx`:
+**World** (`src/world/World.ts`) — A flat `Uint8Array` of block type numbers (0-10). Indexed by `x + z*sizeX + y*sizeXY`. Block types map via `BLOCK_TYPE_NUMBERS` / `NUMBER_TO_BLOCK_TYPE`. Air is 0. Bedrock is 10 (indestructible floor at y=0).
 
-```tsx#frontend.tsx
-import React from "react";
+**BlockSpawner** (`src/world/BlockSpawner.ts`) — `generateQuarry()` builds voxel terrain deterministically using a mulberry32 PRNG seeded with `hash(missionId + mineDepth)`. Daily seed mode uses the date string as part of the seed. Guarantees ore veins near spawn point.
 
-// import .css files directly and it works
-import './index.css';
+**ChunkMesher** (`src/world/ChunkMesher.ts`) — Greedy meshing: merges adjacent same-type blocks into larger box geometries rather than one per block.
 
-import { createRoot } from "react-dom/client";
+**Renderer** (`src/rendering/Renderer.ts`) — Owns the Three.js scene, camera, and player mesh. Terrain management uses `userData` tags (`isTerrain`, `isGround`, `isSpecial`) to identify terrain meshes for selective removal on `rebuildTerrain()`. `initWorld()` clears old terrain, generates new world, builds scene, then updates `CameraController` collidables.
 
-const root = createRoot(document.body);
+**CameraController** (`src/rendering/CameraController.ts`) — Isometric-ish perspective camera with lerp smoothing following the player. Raycast-based collision push-out prevents wall clipping. Collidables are re-registered after each terrain rebuild.
 
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
-}
+**SaveSystem** (`src/game/SaveSystem.ts`) — Singleton (`saveSystem`), localStorage-backed. Dirty-flag pattern: mark dirty on writes, call `save()` explicitly. Versioned (`CURRENT_VERSION = 2`) with default-merging on load (new fields get defaults). Tracks shards, coins, tokens, mine depth, meta upgrades, stats, daily streak.
 
-root.render(<Frontend />);
-```
+**MissionManager** (`src/game/MissionManager.ts`) — Tracks shard/coin counts, timer, and completion/fail conditions per mission. `update()` returns `{ completed, failed, surprise }`.
 
-Then, run index.ts
+**Player** (`src/game/Player.ts`) — Physics (gravity, ground detection), movement from `InputState`, smash targeting. Position is center of entity; feet are at `pos.y - 0.9`.
 
-```sh
-bun --hot ./index.ts
-```
+## UI Layer
 
-For more information, read the Bun API docs in `node_modules/bun-types/docs/**.md`.
+All UI is DOM overlay (HTML in `index.html`, styled by `src/styles/game.css`). No React or framework — direct DOM manipulation from TypeScript modules. Each UI module (`TitleScreen`, `HUD`, `RewardScreen`, `FailedScreen`, `MissionSelect`, etc.) is a plain TS file that shows/hides elements and wires callbacks.
 
-## Mobile-First Game Dev (SmashMine)
+## Mobile-Specific
 
-This project is a **mobile-first PWA game**. Primary use case is mobile phones and tablets.
+- Landscape lock requested via Fullscreen API + Screen Orientation API. Portrait shows a `#rotate-prompt` overlay.
+- Touch controls: left-side `#joystick-zone` (virtual joystick) + right-side `#smash-btn`. Touch targets are 44x44px minimum.
+- `viewport-fit=cover` for notched devices. User-scalable disabled, no text selection, context menu prevented.
+- PWA manifest sets `display: fullscreen` and `orientation: landscape`.
 
-### Mobile Touch Requirements
-- ALL touch controls must work on real mobile devices (not just headless browser)
-- Test touch on real device before declaring done
-- Use real device debugging: Chrome DevTools → Device Mode or connect physical phone via USB
-- Verify touch events fire: check console for `[Joystick]` debug messages
+## Key Data Files
 
-### Mobile Performance
-- Target 60fps on mid-range phones (Pixel A-series, iPhone SE)
-- Keep bundle under 150KB gzip
-- Use PWA offline caching
-- Test on slow 3G connection
+- `src/data/missions.ts` — 12 mission definitions (id, targetShards, timeLimit, zoneSize, surpriseAt)
+- `src/data/lootTable.ts` — Loot tables keyed by block type
+- `src/data/upgrades.ts` — Run-time upgrade definitions
 
-### Mobile UX Requirements
-- Touch targets minimum 44x44px
-- Prevent accidental browser gestures (back swipe, zoom, refresh)
-- Handle orientation changes
-- Handle notched devices (viewport-fit=cover)
+## Deploy
+
+GitHub Pages at `https://bigknoxy.github.io/SmashMine/`. Vite `base` is `/SmashMine/`. Auto-deploys on push to main.
 
 ---
 
@@ -134,7 +76,6 @@ This project is a **mobile-first PWA game**. Primary use case is mobile phones a
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill
 tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
-The skill has specialized workflows that produce better results than ad-hoc answers.
 
 Key routing rules:
 - Product ideas, "is this worth building", brainstorming → invoke office-hours

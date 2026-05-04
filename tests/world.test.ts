@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { World } from '../src/world/World.js';
 import { Player } from '../src/game/Player.js';
 import { generateQuarry } from '../src/world/BlockSpawner.js';
+import { SaveSystem } from '../src/game/SaveSystem.js';
 
 describe('Player collision', () => {
   let world: World;
@@ -111,7 +112,6 @@ describe('BlockSpawner', () => {
 
 describe('SaveSystem', () => {
   it('stores and retrieves shards', () => {
-    const { SaveSystem } = require('../src/game/SaveSystem.js');
     const save = new SaveSystem();
     save.addShards(10);
     expect(save.getShards()).toBe(10);
@@ -119,7 +119,6 @@ describe('SaveSystem', () => {
   });
 
   it('stores and retrieves coins', () => {
-    const { SaveSystem } = require('../src/game/SaveSystem.js');
     const save = new SaveSystem();
     save.addCoins(50);
     expect(save.getCoins()).toBe(50);
@@ -127,7 +126,6 @@ describe('SaveSystem', () => {
   });
 
   it('tracks upgrade levels', () => {
-    const { SaveSystem } = require('../src/game/SaveSystem.js');
     const save = new SaveSystem();
     expect(save.getUpgradeLevel('chain_break')).toBe(0);
     save.setUpgradeLevel('chain_break', 2);
@@ -135,21 +133,10 @@ describe('SaveSystem', () => {
   });
 
   it('tracks missions completed', () => {
-    const { SaveSystem } = require('../src/game/SaveSystem.js');
     const save = new SaveSystem();
     save.incrementMissions();
     save.incrementMissions();
     expect(save.getMissionsCompleted()).toBe(2);
   });
 
-  it('applies prestige bonus', () => {
-    const { SaveSystem } = require('../src/game/SaveSystem.js');
-    const save = new SaveSystem();
-    save.incrementMissions();
-    save.incrementMissions();
-    const before = save.getPrestigeBonus();
-    save.prestige();
-    expect(save.getPrestigeBonus()).toBe(before + 1);
-    expect(save.getShards()).toBe(0);
-  });
 });

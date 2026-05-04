@@ -104,11 +104,10 @@ export function updateCombo(comboCount: number, comboWindow: number): void {
     const multiplier = Math.min(1 + comboCount * 0.1, 3.0).toFixed(1);
     el.textContent = `x${multiplier}`;
     el.classList.add('combo-active');
-    el.style.transform = 'scale(1.3)';
-    
-    // Reset scale after animation
+    el.style.transform = 'translate(-50%, -50%) scale(1.3)';
+
     setTimeout(() => {
-      el.style.transform = 'scale(1)';
+      el.style.transform = 'translate(-50%, -50%) scale(1)';
     }, 100);
     
     // Auto-hide after combo window
