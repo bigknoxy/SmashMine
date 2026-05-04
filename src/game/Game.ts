@@ -435,10 +435,12 @@ export class Game {
     if (isPlaying) {
       HUD.show();
       document.getElementById('smash-btn')?.classList.remove('hidden');
+      document.getElementById('jump-btn')?.classList.remove('hidden');
       document.getElementById('joystick-zone')?.classList.remove('hidden');
     } else {
       HUD.hide();
       document.getElementById('smash-btn')?.classList.add('hidden');
+      document.getElementById('jump-btn')?.classList.add('hidden');
       document.getElementById('joystick-zone')?.classList.add('hidden');
     }
 
@@ -519,6 +521,7 @@ export class Game {
     HUD.show();
 
     document.getElementById('smash-btn')?.classList.remove('hidden');
+    document.getElementById('jump-btn')?.classList.remove('hidden');
     document.getElementById('joystick-zone')?.classList.remove('hidden');
 
     this.gameState = GameState.MISSION_INTRO;

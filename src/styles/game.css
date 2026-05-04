@@ -102,6 +102,8 @@ html, body {
 
 #joystick-base {
   position: absolute;
+  left: 50%;
+  top: 50%;
   width: clamp(100px, 20vw, 140px);
   height: clamp(100px, 20vw, 140px);
   border: 4px solid rgba(255, 255, 255, 0.2);
@@ -109,6 +111,7 @@ html, body {
   background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
   pointer-events: none;
   opacity: 0;
+  transform: translate(-50%, -50%);
   transition: opacity 0.2s;
 }
 
@@ -376,6 +379,30 @@ html, body {
   transform: scale(0.9);
 }
 
+#jump-btn {
+  position: absolute;
+  right: max(1rem, env(safe-area-inset-right, 0px));
+  bottom: calc(max(1rem, env(safe-area-inset-bottom, 0px)) + clamp(80px, 20vw, 140px));
+  width: clamp(50px, 12vw, 70px);
+  height: clamp(50px, 12vw, 70px);
+  background: radial-gradient(circle, #44aaff, #2266cc);
+  color: #fff;
+  z-index: 100;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.3);
+  font-size: clamp(0.7rem, 2vw, 0.95rem);
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
 #smash-btn {
   position: absolute;
   right: max(1rem, env(safe-area-inset-right, 0px));
@@ -618,6 +645,8 @@ html, body {
   padding-left: calc(1.5rem + env(safe-area-inset-left, 0px));
   padding-right: calc(1.5rem + env(safe-area-inset-right, 0px));
   overflow: hidden;
+  left: 0;
+  right: 0;
   max-width: 680px;
   width: 100%;
   height: 100%;

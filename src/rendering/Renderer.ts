@@ -1,5 +1,5 @@
 import {
-  WebGLRenderer, PerspectiveCamera, Scene, AmbientLight, DirectionalLight,
+  WebGLRenderer, PerspectiveCamera, Scene, AmbientLight, DirectionalLight, Fog,
   Mesh, MeshStandardMaterial, BoxGeometry, CircleGeometry, MeshBasicMaterial,
   Group, Color, EdgesGeometry, LineSegments, LineBasicMaterial, BufferGeometry, Line, Vector3,
   type Object3D,
@@ -49,6 +49,7 @@ export class Renderer {
     this.scene = new Scene();
     this.scene.background = new Color(0x050510);
     this.scene.add(new AmbientLight(0xffffff, 0.4));
+    this.scene.fog = new Fog(0x050510, 12, 28);
 
     const dir = new DirectionalLight(0xffffff, 1.0);
     dir.position.set(20, 30, 10);
@@ -107,7 +108,7 @@ export class Renderer {
     const silhouetteMat = new MeshBasicMaterial({
       color: 0xffaa00,
       transparent: true,
-      opacity: 0.3,
+      opacity: 0.5,
       depthTest: false,
       depthWrite: false,
     });

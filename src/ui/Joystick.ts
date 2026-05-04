@@ -43,10 +43,10 @@ export class Joystick {
     window.addEventListener('blur', () => this.forceReset());
 
     this.bindActionButton('smash-btn', 'smash');
-    this.bindActionButton('special-btn', 'special');
+    this.bindActionButton('jump-btn', 'jump');
   }
 
-  private bindActionButton(id: string, key: 'smash' | 'special') {
+  private bindActionButton(id: string, key: 'smash' | 'special' | 'jump') {
     const btn = document.getElementById(id);
     if (!btn) return;
     const activate = (e: Event) => { e.preventDefault(); this.inputState[key] = true; };
@@ -65,17 +65,11 @@ export class Joystick {
     this.active = true;
     this.container.classList.add('active');
 
-    // Dynamic joystick: center base on touch point
-    const rect = this.container.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    this.startPos = { x: e.clientX, y: e.clientY };
-    
-    this.base.style.left = `${x}px`;
-    this.base.style.top = `${y}px`;
-    this.knob.style.left = `${x}px`;
-    this.knob.style.top = `${y}px`;
+    // Fixed joystick: use base center as origin, not touch point
+    const baseRect = this.base.getBoundingClientRect();
+    const centerX = baseRect.left + baseRect.width / 2;
+    const centerY = baseRect.top + baseRect.height / 2;
+    this.startPos = { x: centerX, y: centerY };
 
     try { this.container.setPointerCapture(e.pointerId); } catch {}
 

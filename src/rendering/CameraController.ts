@@ -2,8 +2,8 @@ import * as THREE from 'three';
 
 // Fix 2: camera collision raycast — never clip through geometry
 const CAMERA_RADIUS = 0.3;
-const BASE_OFFSET = new THREE.Vector3(5, 9, 11); // Landscape offset
-const BASE_FOV = 60;
+const BASE_OFFSET = new THREE.Vector3(3, 5.5, 7); // Tighter for mobile visibility
+const BASE_FOV = 70;
 const LERP_FACTOR = 0.1; // Smooth camera follow
 
 export class CameraController {
