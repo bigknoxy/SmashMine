@@ -57,6 +57,7 @@ export class World {
     } else {
       x = arg1; y = arg2 as number; z = arg3!; type = arg4!;
     }
+    if (!this.isInside(x, y, z)) return;
     const num = BLOCK_TYPE_NUMBERS.get(type) ?? 0;
     this.blocks[this.index({ x, y, z })] = num;
   }
@@ -70,6 +71,7 @@ export class World {
     } else {
       x = arg1; y = arg2!; z = arg3!;
     }
+    if (!this.isInside(x, y, z)) return 'air';
     const oldType = this.getBlock({ x, y, z });
     this.blocks[this.index({ x, y, z })] = 0;
     return oldType;

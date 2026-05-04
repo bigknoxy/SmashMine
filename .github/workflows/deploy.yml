@@ -17,6 +17,7 @@ concurrency:
 jobs:
   version:
     runs-on: ubuntu-latest
+    timeout-minutes: 2
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -26,6 +27,7 @@ jobs:
       - name: Bump version
         id: version
         run: |
+          set -euo pipefail
           CURRENT=$(cat package.json | grep '"version"' | head -1 | sed 's/.*: "//;s/".*//')
           PATCH=$((10#${CURRENT##*.} + 1))
           MAJOR_MINOR=${CURRENT%.*}
@@ -36,28 +38,49 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add package.json
           git diff --cached --quiet || git commit -m "chore: bump version to ${NEW}"
-          git push
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push && break || sleep 2
+          done
 
   build:
     needs: version
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
       - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
       - name: Install dependencies
         run: bun install
+
       - name: Type check
-        run: npx tsc --noEmit
+        run: bunx tsc --noEmit
+
+      - name: Run tests
+        run: bun run test
+
       - name: Build
         run: bun run build
+
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: dist
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -65,3 +88,8 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Verify deployment
+        run: |
+          sleep 30
+          curl -sSf -o /dev/null -w '%{http_code}' "${{ steps.deployment.outputs.page_url }}" | grep -q 200

@@ -34,7 +34,7 @@ export function show(progress: MissionProgress, onUpgrade: (id: UpgradeId) => vo
   }
 
   if (TOKEN_DISPLAY) {
-    const tokens = totalTokens ?? Math.floor(progress.shards * 2) + Math.max(0, Math.floor(((timeLimit ?? 60) - progress.elapsed) * 10));
+    const tokens = totalTokens ?? progress.shards * 10 + Math.min(Math.max(0, Math.floor(((timeLimit ?? 60) - progress.elapsed) * 2)), 100);
     TOKEN_DISPLAY.textContent = `Tokens: +${tokens} 🪙`;
     TOKEN_DISPLAY.classList.remove('hidden');
   }
@@ -58,10 +58,10 @@ export function show(progress: MissionProgress, onUpgrade: (id: UpgradeId) => vo
     }
     
     cards.forEach(card => {
-      card.addEventListener('click', () => {
+      (card as HTMLElement).onclick = () => {
         const id = (card as HTMLElement).dataset.upgrade as UpgradeId;
         if (id && upgradeCallback) upgradeCallback(id);
-      });
+      };
     });
   }
   
