@@ -35,12 +35,10 @@ export function updateTimer(elapsed: number, limit: number): void {
     const ratio = remaining / limit;
     el.classList.remove('time-warning', 'time-critical', 'time-pulse');
     
-    if (ratio <= 0.167) { // ≤0:10 (10 seconds = 16.7% of 60)
+    if (ratio <= 0.167) {
       el.classList.add('time-pulse');
-    } else if (ratio <= 0.5) { // ≤0:30 (30 seconds = 50%)
+    } else if (ratio <= 0.5) {
       el.classList.add('time-critical');
-    } else if (ratio <= 1) { // ≤1:00
-      el.classList.add('time-warning');
     }
   }
 }
@@ -95,22 +93,23 @@ export function hideTutorial(): void {
 
 // Phase 2: Combo meter - HUD display with scaling animation
 let comboTimeout: ReturnType<typeof setTimeout> | null = null;
+let scaleTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export function updateCombo(comboCount: number, comboWindow: number): void {
   const el = document.getElementById('combo-display');
   if (!el) return;
-  
+
   if (comboCount > 0) {
     const multiplier = Math.min(1 + comboCount * 0.1, 3.0).toFixed(1);
     el.textContent = `x${multiplier}`;
     el.classList.add('combo-active');
     el.style.transform = 'translate(-50%, -50%) scale(1.3)';
 
-    setTimeout(() => {
+    if (scaleTimeout) clearTimeout(scaleTimeout);
+    scaleTimeout = setTimeout(() => {
       el.style.transform = 'translate(-50%, -50%) scale(1)';
     }, 100);
-    
-    // Auto-hide after combo window
+
     if (comboTimeout) clearTimeout(comboTimeout);
     comboTimeout = setTimeout(() => {
       el.classList.remove('combo-active');

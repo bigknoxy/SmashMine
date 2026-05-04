@@ -26,7 +26,7 @@ export class Player {
     return Player.BASE_SPEED + level * 0.6;
   }
 
-  hasUpgrade(id: UpgradeId): boolean { return this.upgrades.has(id); }
+  hasUpgrade(id: UpgradeId): boolean { return this.getUpgradeLevel(id) > 0; }
   getUpgradeLevel(id: UpgradeId): number { 
     let level = this.upgrades.get(id) || 0;
     if (id === 'chain_break') {

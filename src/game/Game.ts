@@ -396,7 +396,6 @@ export class Game {
 
       for (const block of broken) {
         this.lootSystem.spawnBlockLoot(block.type, block.pos);
-        this.world.removeBlock(block.pos);
       }
       this.terrainDirty = true;
       telemetry.lootCollected += broken.length;
@@ -417,13 +416,14 @@ export class Game {
    */
   // Fix 3: state-gate HUD and overlays to prevent overlap
   private applyStateToUI(state: GameState): void {
-    // Hide all overlays first
+    // Hide all overlays not managed by the current state
     this.titleScreen.hide();
     MissionSelect.hide();
-    RewardScreen.hide();
+    if (state !== GameState.MISSION_COMPLETE) RewardScreen.hide();
     FailedScreen.hide();
     Shop.hide();
-    document.getElementById('mission-intro')?.classList.add('hidden');
+    UpgradeScreen.hide();
+    if (state !== GameState.MISSION_INTRO) document.getElementById('mission-intro')?.classList.add('hidden');
     document.getElementById('rotate-prompt')?.classList.add('hidden');
 
     // Toggle gameplay UI (HUD, controls)
@@ -548,8 +548,8 @@ export class Game {
 
     const progress = this.missionManager.getProgress();
     const timeLimit = this.currentMission!.timeLimit;
-    const baseTokens = Math.floor(progress.shards * 2);
-    const timeBonus = Math.max(0, Math.floor((timeLimit - progress.elapsed) * 10));
+    const baseTokens = progress.shards * 10;
+    const timeBonus = Math.min(Math.max(0, Math.floor((timeLimit - progress.elapsed) * 2)), 100);
     const rawTokens = baseTokens + timeBonus;
     const tokenMultiplier = 1 + (saveSystem.getData().metaUpgrades?.token_multiplier ?? 0) * 0.25;
     const displayTokens = Math.round(rawTokens * tokenMultiplier);

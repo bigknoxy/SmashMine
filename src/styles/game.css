@@ -350,6 +350,7 @@ html, body {
   border-radius: 2rem;
   font-size: clamp(0.9rem, 2.5vw, 1.1rem);
   pointer-events: none;
+  z-index: 101;
 }
 
 @keyframes toastPop {
@@ -428,34 +429,6 @@ html, body {
 #smash-btn:active {
   transform: scale(0.9);
   box-shadow: 0 0 30px rgba(255, 68, 68, 0.6);
-}
-
-#special-btn {
-  position: absolute;
-  right: max(1rem, env(safe-area-inset-right, 0px));
-  bottom: calc(max(1rem, env(safe-area-inset-bottom, 0px)) + clamp(70px, 15vw, 100px) + 1rem);
-  width: clamp(55px, 15vw, 90px);
-  height: clamp(55px, 15vw, 90px);
-  background: radial-gradient(circle, #ffd700, #ff8800);
-  color: #1a1a2e;
-  font-size: clamp(0.8rem, 2.5vw, 1.1rem);
-  z-index: 100;
-  border-radius: 50%;
-  border: 3px solid rgba(255,255,255,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  touch-action: none;
-  -webkit-touch-callout: none;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-#special-btn:active {
-  transform: scale(0.9);
-  box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
 }
 
 /* ── Mission overlay screens (shared) ── */

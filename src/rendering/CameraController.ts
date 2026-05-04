@@ -29,8 +29,9 @@ export class CameraController {
     // Apply raycast collision push-out to desiredPos
     this.applyCollision(playerVec, targetPos);
 
-    // Smooth lerp toward desired position
-    this.cameraPos.lerp(this.desiredPos, LERP_FACTOR);
+    // Delta-scaled lerp for frame-rate-independent camera follow
+    const t = 1 - Math.exp(-6 * delta);
+    this.cameraPos.lerp(this.desiredPos, t);
 
     // Apply shake on top of lerped position
     if (this.shakeIntensity > 0) {
