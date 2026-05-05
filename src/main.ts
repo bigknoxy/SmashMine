@@ -64,8 +64,7 @@ canvas.addEventListener('pointerdown', (e) => {
      e.target.closest('#joystick-base') ||
      e.target.closest('#joystick-knob') ||
      e.target.closest('#smash-btn') ||
-     e.target.closest('#jump-btn') ||
-     e.target.closest('#special-btn'))
+     e.target.closest('#jump-btn'))
   );
   
   // Only request landscape lock and handle canvas click if not on UI elements

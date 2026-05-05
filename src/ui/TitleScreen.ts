@@ -24,8 +24,14 @@ export class TitleScreen {
   }
   
   private showDailySeed() {
+    this.todayDate = saveSystem.getTodayDateString();
+    const existing = document.getElementById('daily-seed-text');
+    if (existing) {
+      existing.textContent = `Today's Quarry: ${this.todayDate}`;
+      return;
+    }
     const title = document.querySelector('.game-title');
-    if (title && !document.getElementById('daily-seed-text')) {
+    if (title) {
       const dailyTitle = document.createElement('div');
       dailyTitle.id = 'daily-seed-text';
       dailyTitle.textContent = `Today's Quarry: ${this.todayDate}`;
@@ -38,7 +44,7 @@ export class TitleScreen {
     if (this.shown) return;
     this.element.classList.remove('hidden');
     this.shown = true;
-    // Re-wire start button in case it was removed
+    this.showDailySeed();
     this.wireStartButton();
   }
 

@@ -1,7 +1,7 @@
 import type { MissionProgress, UpgradeId } from '../game/types.js';
 import { UPGRADES } from '../data/upgrades.js';
 import { renderLootHTML } from './lootRenderer.js';
-import { saveSystem } from '../game/SaveSystem.js';
+import { saveSystem, calculateTokens } from '../game/SaveSystem.js';
 
 const REWARD_SCREEN = document.getElementById('reward-screen');
 const LOOT_SUMMARY = document.getElementById('loot-summary');
@@ -34,7 +34,7 @@ export function show(progress: MissionProgress, onUpgrade: (id: UpgradeId) => vo
   }
 
   if (TOKEN_DISPLAY) {
-    const tokens = totalTokens ?? progress.shards * 10 + Math.min(Math.max(0, Math.floor(((timeLimit ?? 60) - progress.elapsed) * 2)), 100);
+    const tokens = totalTokens ?? calculateTokens(progress.shards, progress.elapsed, timeLimit ?? 60);
     TOKEN_DISPLAY.textContent = `Tokens: +${tokens} 🪙`;
     TOKEN_DISPLAY.classList.remove('hidden');
   }

@@ -362,4 +362,10 @@ export class SaveSystem {
   }
 }
 
+export function calculateTokens(shards: number, elapsed: number, timeLimit: number): number {
+  const baseTokens = shards * 10;
+  const timeBonus = Math.min(Math.max(0, Math.floor((timeLimit - elapsed) * 2)), 100);
+  return baseTokens + timeBonus;
+}
+
 export const saveSystem = new SaveSystem();

@@ -23,7 +23,7 @@ import { Vector3 } from 'three';
 import { MISSIONS } from '../data/missions.js';
 import type { MissionDef } from './types.js';
 import { telemetry } from './Telemetry.js';
-import { saveSystem } from './SaveSystem.js';
+import { saveSystem, calculateTokens } from './SaveSystem.js';
 import { TutorialManager } from './TutorialManager.js';
 
 export class Game {
@@ -548,9 +548,7 @@ export class Game {
 
     const progress = this.missionManager.getProgress();
     const timeLimit = this.currentMission!.timeLimit;
-    const baseTokens = progress.shards * 10;
-    const timeBonus = Math.min(Math.max(0, Math.floor((timeLimit - progress.elapsed) * 2)), 100);
-    const rawTokens = baseTokens + timeBonus;
+    const rawTokens = calculateTokens(progress.shards, progress.elapsed, timeLimit);
     const tokenMultiplier = 1 + (saveSystem.getData().metaUpgrades?.token_multiplier ?? 0) * 0.25;
     const displayTokens = Math.round(rawTokens * tokenMultiplier);
 
