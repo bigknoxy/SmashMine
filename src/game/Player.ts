@@ -13,6 +13,7 @@ export class Player {
   velocity: Vec3;
   onGround = true;
   upgrades: Map<UpgradeId, number> = new Map();
+  private midAirJumps = 0;
 
   constructor(world: World) {
     this.position = { x: world.size.x / 2, y: world.size.y - 2, z: world.size.z / 2 };
@@ -70,6 +71,7 @@ export class Player {
     if (this.collidesVertical(newPos, world)) {
       if (this.velocity.y < 0) {
         this.onGround = true;
+        this.midAirJumps = 0;
         newPos.y = Math.ceil(newPos.y - Player.EYE_HEIGHT) + Player.EYE_HEIGHT;
       }
       this.velocity.y = 0;
@@ -86,6 +88,10 @@ export class Player {
     if (input.jump && this.onGround) {
       this.velocity.y = Player.JUMP_VEL;
       this.onGround = false;
+      input.jump = false;
+    } else if (input.jump && this.hasUpgrade('double_jump') && this.midAirJumps < this.getUpgradeLevel('double_jump')) {
+      this.velocity.y = Player.JUMP_VEL * 0.8;
+      this.midAirJumps++;
       input.jump = false;
     }
   }
