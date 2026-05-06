@@ -3,26 +3,10 @@ import { saveSystem } from '../game/SaveSystem.js';
 
 const META_UPGRADES: MetaUpgradeDef[] = [
   {
-    id: 'pickaxe_tier',
-    name: 'Pickaxe Tier',
-    icon: '⛏️',
-    description: 'Increases smash damage. Each level reduces block HP by 20%.',
-    maxLevel: 5,
-    costPerLevel: 50,
-  },
-  {
-    id: 'backpack_size',
-    name: 'Backpack Size',
-    icon: '🎒',
-    description: 'Increases loot capacity. Reduces loot despawn rate.',
-    maxLevel: 5,
-    costPerLevel: 40,
-  },
-  {
     id: 'fog_reduction',
     name: 'Fog Reduction',
     icon: '🌫️',
-    description: 'Clears the fog for better visibility. Each level reduces fog by 25%.',
+    description: 'Clears the fog for better visibility. Each level pushes fog 25% farther.',
     maxLevel: 3,
     costPerLevel: 100,
   },

@@ -11,7 +11,6 @@ export interface SaveData {
   totalCoinsCollected: number;
   lastPlayed: number;
   hasSeenTutorial: boolean;
-  prestigeLevel: number;
   // Phase 2: Daily seed and streak tracking
   bestShardCount: number;
   bestCompletionTime: number;
@@ -56,7 +55,7 @@ const defaultData: SaveData = {
   totalCoinsCollected: 0,
   lastPlayed: Date.now(),
   hasSeenTutorial: false,
-  prestigeLevel: 0,
+
   bestShardCount: 0,
   bestCompletionTime: 0,
   lastPlayedDate: '',
@@ -66,8 +65,6 @@ const defaultData: SaveData = {
   tokens: 0,
   mineDepth: 1,
   metaUpgrades: {
-    pickaxe_tier: 0,
-    backpack_size: 0,
     fog_reduction: 0,
     token_multiplier: 0,
   },
@@ -152,10 +149,8 @@ export class SaveSystem {
   }
 
   addCoins(amount: number): void {
-    const prestigeMult = 1 + (this.data.prestigeLevel * 0.2);
-    const finalAmount = Math.round(amount * prestigeMult);
-    this.data.coins += finalAmount;
-    this.data.totalCoinsCollected += finalAmount;
+    this.data.coins += amount;
+    this.data.totalCoinsCollected += amount;
     this.markDirty();
   }
 
@@ -257,7 +252,7 @@ export class SaveSystem {
   purchaseMetaUpgrade(id: MetaUpgradeId, cost: number): boolean {
     if (!this.canPurchaseMetaUpgrade(id, cost)) return false;
     this.data.tokens -= cost;
-    if (!this.data.metaUpgrades) this.data.metaUpgrades = { pickaxe_tier: 0, backpack_size: 0, fog_reduction: 0, token_multiplier: 0 };
+    if (!this.data.metaUpgrades) this.data.metaUpgrades = { fog_reduction: 0, token_multiplier: 0 };
     this.data.metaUpgrades[id] = (this.data.metaUpgrades[id] ?? 0) + 1;
     this.markDirty();
     return true;
@@ -265,8 +260,6 @@ export class SaveSystem {
   
   private getMetaUpgradeMaxLevel(id: MetaUpgradeId): number {
     const maxLevels: Record<MetaUpgradeId, number> = {
-      pickaxe_tier: 5,
-      backpack_size: 5,
       fog_reduction: 3,
       token_multiplier: 4,
     };

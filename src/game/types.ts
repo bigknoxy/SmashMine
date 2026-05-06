@@ -31,8 +31,6 @@ export type ShopItemId =
   | 'permanent_power';
 
 export type MetaUpgradeId =
-  | 'pickaxe_tier'
-  | 'backpack_size'
   | 'fog_reduction'
   | 'token_multiplier';
 

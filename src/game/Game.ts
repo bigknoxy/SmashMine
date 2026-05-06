@@ -22,7 +22,6 @@ import { Vector3 } from 'three';
 
 import { MISSIONS } from '../data/missions.js';
 import type { MissionDef } from './types.js';
-import { telemetry } from './Telemetry.js';
 import { saveSystem, calculateTokens } from './SaveSystem.js';
 import { TutorialManager } from './TutorialManager.js';
 
@@ -398,7 +397,6 @@ export class Game {
         this.lootSystem.spawnBlockLoot(block.type, block.pos);
       }
       this.terrainDirty = true;
-      telemetry.lootCollected += broken.length;
 
       this.blocksSmashed += broken.length;
       if (this.comboCount > 1) {
@@ -474,7 +472,6 @@ export class Game {
   private currentMission: MissionDef | null = null;
 
   startMission(mission: MissionDef): void {
-    telemetry.missionStarted++;
     const streakContinued = saveSystem.updateStreakOnReplay();
     if (streakContinued) {
       console.log(`🔥 Streak: ${saveSystem.getStreak()} consecutive runs!`);
@@ -539,7 +536,6 @@ export class Game {
   }
 
   private missionComplete(): void {
-    telemetry.missionCompleted++;
     this.audioEngine.playMissionComplete();
     this.gameState = GameState.MISSION_COMPLETE;
     this.applyStateToUI(this.gameState);
@@ -574,7 +570,6 @@ export class Game {
   }
 
   private missionFailed(): void {
-    telemetry.missionFailed = (telemetry.missionFailed || 0) + 1;
     this.audioEngine.playMissionFailed();
     this.gameState = GameState.MISSION_FAILED;
     this.applyStateToUI(this.gameState);
@@ -595,7 +590,6 @@ export class Game {
   private pickUpgrade(upgradeId: UpgradeId): void {
     this.upgradeSystem.applyUpgrade(upgradeId, this.player);
     this.audioEngine.playUpgrade();
-    telemetry.upgradesPicked++;
     this.gameState = GameState.UPGRADE_PICK;
     this.applyStateToUI(this.gameState);
   }

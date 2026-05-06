@@ -9,6 +9,7 @@ import type { Vec3 } from '../game/types.js';
 import { World } from '../world/World.js';
 import { buildScene } from './SceneBuilder.js';
 import { generateQuarry } from '../world/BlockSpawner.js';
+import { saveSystem } from '../game/SaveSystem.js';
 
 /** Tags used to identify scene objects for selective removal/rebuild. */
 const TERRAIN_TAGS = ['isTerrain', 'isGround', 'isSpecial'] as const;
@@ -216,6 +217,14 @@ export class Renderer {
     // Phase 3: Pass mine depth to generate deeper levels
     generateQuarry(this.world, seed, mineDepth);
     buildScene(this.world, this.scene);
+
+    // Phase 3: Apply fog_reduction meta upgrade
+    const fogLevel = saveSystem.getMetaUpgradeLevel('fog_reduction');
+    const fogFactor = 1 + fogLevel * 0.25;
+    const fog = this.scene.fog as Fog;
+    fog.near = 12 * fogFactor;
+    fog.far = 28 * fogFactor;
+
     this.updateCameraCollidables();
     return this.world;
   }
