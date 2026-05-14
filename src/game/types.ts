@@ -15,7 +15,9 @@ export type BlockType =
   | 'lucky_cube'
   | 'gold_ore'
   | 'op_relic_block'
-  | 'bedrock';
+  | 'bedrock'
+  | 'volatile_crystal'
+  | 'time_crystal';
 
 export type UpgradeId =
   | 'chain_break'

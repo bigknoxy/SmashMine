@@ -18,6 +18,8 @@ export const LOOT_TABLES: Record<string, LootTableEntry[]> = {
   lucky_cube: [{ type: 'lucky_cubes', min: 1, max: 1, weight: 70 }, { type: 'coins', min: 5, max: 15, weight: 20 }, { type: 'power_shards', min: 2, max: 5, weight: 10 }],
   gold_ore: [{ type: 'coins', min: 5, max: 10, weight: 80 }, { type: 'power_shards', min: 1, max: 2, weight: 20 }],
   op_relic_block: [{ type: 'op_relics', min: 1, max: 1, weight: 60 }, { type: 'power_shards', min: 3, max: 5, weight: 30 }, { type: 'coins', min: 10, max: 20, weight: 10 }],
+  volatile_crystal: [{ type: 'blast_crystals', min: 1, max: 2, weight: 50 }, { type: 'coins', min: 3, max: 6, weight: 50 }],
+  time_crystal: [{ type: 'power_shards', min: 1, max: 2, weight: 60 }, { type: 'coins', min: 5, max: 10, weight: 40 }],
   bedrock: [],
 };
 

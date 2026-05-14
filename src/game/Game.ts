@@ -183,7 +183,8 @@ export class Game {
     // Phase 2: Timer tension - ticking SFX last 10s
     const progress = this.missionManager.getProgress();
     if (progress.elapsed > 0 && this.currentMission) {
-      const remaining = Math.max(0, this.currentMission.timeLimit - progress.elapsed);
+      const effectiveLimit = this.missionManager.getTimeLimit();
+      const remaining = Math.max(0, effectiveLimit - progress.elapsed);
       if (remaining <= 10 && remaining > 0 && Math.floor(remaining) !== Math.floor(remaining + delta)) {
         this.audioEngine.playTimerTick();
       }
@@ -381,7 +382,14 @@ export class Game {
 
       this.audioEngine.playSmash();
       this.renderer.addShake(0.15);
-      this.particleSystem.emitBurst(target, '#ff4400');
+
+      // Different particle color for volatile crystal explosions
+      const hasVolatile = broken.some(b => b.type === 'volatile_crystal');
+      this.particleSystem.emitBurst(target, hasVolatile ? '#ff2200' : '#ff4400');
+
+      if (hasVolatile) {
+        this.renderer.addShake(0.3); // Stronger shake for explosions
+      }
 
       const displayText = this.comboCount > 1 ? `+${this.comboCount}` : '+1';
       this.floatingTexts.push({
@@ -396,6 +404,25 @@ export class Game {
       for (const block of broken) {
         this.lootSystem.spawnBlockLoot(block.type, block.pos);
       }
+
+      // Time crystal: add time to mission clock
+      let timeBonusActive = false;
+      for (const block of broken) {
+        if (block.type === 'time_crystal') {
+          this.missionManager.addTime(8);
+          this.audioEngine.playTimeBonus();
+          this.floatingTexts.push({
+            x: block.pos.x + 0.5,
+            y: block.pos.y + 1.0,
+            z: block.pos.z + 0.5,
+            text: '+8s',
+            age: 0,
+            maxAge: 0.8,
+          });
+          timeBonusActive = true;
+        }
+      }
+
       this.terrainDirty = true;
 
       this.blocksSmashed += broken.length;

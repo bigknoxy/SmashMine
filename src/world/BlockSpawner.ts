@@ -54,11 +54,13 @@ export function generateQuarry(world: World, missionId: string, mineDepth = 1): 
     const oreType = rand();
     // Phase3: Deeper levels have better ore chances
     const depthBonus = Math.min(mineDepth * 0.05, 0.3);
-    const type: BlockType = oreType < 0.2 + depthBonus ? 'gold_ore' : 
-      oreType < 0.35 + depthBonus ? 'copper_ore' : 
-      oreType < 0.55 ? 'shard_cluster' : 
-      oreType < 0.7 ? 'blast_crystal' : 
-      oreType < 0.82 ? 'lucky_cube' : 'op_relic_block';
+    const type: BlockType = oreType < 0.2 + depthBonus ? 'gold_ore' :
+      oreType < 0.35 + depthBonus ? 'copper_ore' :
+      oreType < 0.55 ? 'shard_cluster' :
+      oreType < 0.68 ? 'blast_crystal' :
+      oreType < 0.78 ? 'volatile_crystal' :
+      oreType < 0.88 ? 'lucky_cube' :
+      oreType < 0.94 ? 'time_crystal' : 'op_relic_block';
     world.setBlock(vec3(wx, wy, wz), type);
     // Add a couple neighbor blocks too
     const dirs = [vec3(wx+1,wy,wz), vec3(wx-1,wy,wz), vec3(wx,wy,wz+1), vec3(wx,wy,wz-1)];
@@ -110,6 +112,18 @@ export function generateQuarry(world: World, missionId: string, mineDepth = 1): 
     if (world.isInside(pos)) {
       const oreType: BlockType = rand() < 0.5 ? 'shard_cluster' : rand() < 0.6 ? 'copper_ore' : 'blast_crystal';
       world.setBlock(pos, oreType);
+    }
+  }
+
+  // Guaranteed special blocks near spawn area
+  const specialSpawns = [
+    { pos: vec3(startX - clearRadius - 2, 2, startZ), type: 'volatile_crystal' as BlockType },
+    { pos: vec3(startX + clearRadius + 2, 1, startZ + 1), type: 'time_crystal' as BlockType },
+    { pos: vec3(startX, 2, startZ + clearRadius + 2), type: 'volatile_crystal' as BlockType },
+  ];
+  for (const s of specialSpawns) {
+    if (world.isInside(s.pos) && world.getBlock(s.pos) === 'air') {
+      world.setBlock(s.pos, s.type);
     }
   }
 

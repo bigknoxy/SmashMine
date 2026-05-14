@@ -12,6 +12,8 @@ export const BLOCK_DEFS: Record<BlockType, BlockDef> = {
   gold_ore: { type: 'gold_ore', color: '#FFD700', rarity: 'rare', lootTable: [{ type: 'coins', min: 5, max: 12, weight: 1 }], hp: 2 },
   op_relic_block: { type: 'op_relic_block', color: '#e040fb', rarity: 'legendary', lootTable: [{ type: 'op_relics', min: 1, max: 1, weight: 1 }], hp: 4 },
   bedrock: { type: 'bedrock', color: '#1a1a2e', rarity: 'common', lootTable: [], hp: 999 },
+  volatile_crystal: { type: 'volatile_crystal', color: '#ff4444', rarity: 'uncommon', lootTable: [], hp: 1 },
+  time_crystal: { type: 'time_crystal', color: '#44ffaa', rarity: 'rare', lootTable: [], hp: 2 },
 };
 
 export function isBreakable(type: BlockType): boolean {

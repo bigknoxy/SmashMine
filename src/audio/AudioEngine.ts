@@ -113,6 +113,26 @@ export class AudioEngine {
     } catch {}
   }
   
+  /** Rising chime played when a time_crystal is smashed. */
+  playTimeBonus(): void {
+    try {
+      const ctx = this.ensureCtx();
+      const now = ctx.currentTime;
+      const freqs = [400, 600, 900];
+      freqs.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + i * 0.06);
+        gain.gain.setValueAtTime(0.1, now + i * 0.06);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.2);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now + i * 0.06);
+        osc.stop(now + i * 0.06 + 0.2);
+      });
+    } catch {}
+  }
+
   // Phase 2: Timer tension - Ticking SFX last 10s
   playTimerTick(): void {
     try {

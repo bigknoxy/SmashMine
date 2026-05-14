@@ -4,6 +4,7 @@ import type { World } from '../world/World.js';
 export class MissionManager {
   private mission: MissionDef | null = null;
   private progress: MissionProgress = this.emptyProgress();
+  private timeBonus = 0;
 
   private emptyProgress(): MissionProgress {
     return {
@@ -19,6 +20,7 @@ export class MissionManager {
   startMission(mission: MissionDef): void {
     this.mission = mission;
     this.progress = this.emptyProgress();
+    this.timeBonus = 0;
   }
 
   update(delta: number, collected: { type: LootType; amount: number }[]): { completed: boolean; surprise: boolean; failed: boolean } {
@@ -27,7 +29,7 @@ export class MissionManager {
     this.progress.elapsed += delta;
 
     // Check time limit first - if time's up, mission failed
-    if (this.progress.elapsed >= this.mission.timeLimit) {
+    if (this.progress.elapsed >= this.getEffectiveTimeLimit()) {
       return { completed: false, surprise: false, failed: true };
     }
 
@@ -54,6 +56,15 @@ export class MissionManager {
 
   getProgress(): MissionProgress { return this.progress; }
   getTargetShards(): number { return this.mission?.targetShards ?? 0; }
-  getTimeLimit(): number { return this.mission?.timeLimit ?? 240; }
+  getTimeLimit(): number { return this.getEffectiveTimeLimit(); }
   isCompleted(): boolean { return this.progress.shards >= this.getTargetShards(); }
+
+  private getEffectiveTimeLimit(): number {
+    return (this.mission?.timeLimit ?? 240) + this.timeBonus;
+  }
+
+  /** Add extra seconds to the mission timer (e.g. from time_crystal). */
+  addTime(seconds: number): void {
+    this.timeBonus += seconds;
+  }
 }

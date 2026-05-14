@@ -13,6 +13,8 @@ const BLOCK_TYPE_NUMBERS: Map<BlockType, number> = new Map([
   ['gold_ore', 8],
   ['op_relic_block', 9],
   ['bedrock', 10],
+  ['volatile_crystal', 11],
+  ['time_crystal', 12],
 ]);
 
 const NUMBER_TO_BLOCK_TYPE: Map<number, BlockType> = new Map(

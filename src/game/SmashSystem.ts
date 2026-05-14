@@ -18,6 +18,11 @@ export class SmashSystem {
     world.removeBlock({ x, y, z });
     broken.push({ pos: { x, y, z }, type: blockType });
 
+    // Volatile crystal: explodes on smash, breaking nearby blocks
+    if (blockType === 'volatile_crystal') {
+      this.smashRadius(world, { x, y, z }, 1.5, broken);
+    }
+
     if (player.hasUpgrade('chain_break')) {
       const depth = player.getUpgradeLevel('chain_break');
       this.chainBreak(world, { x, y, z }, blockType, depth, broken);
@@ -25,6 +30,25 @@ export class SmashSystem {
 
     if (player.hasUpgrade('mega_swing') && Math.random() < 0.2) {
       this.smashRadius(world, { x, y, z }, 1.5, broken);
+    }
+
+    // Chain reaction: any volatile_crystal caught in blast/chain also explodes
+    const exploded = new Set<string>();
+    exploded.add(`${x},${y},${z}`); // primary already exploded
+    let foundNew = true;
+    while (foundNew) {
+      foundNew = false;
+      for (const b of broken) {
+        const key = `${b.pos.x},${b.pos.y},${b.pos.z}`;
+        if (b.type === 'volatile_crystal' && !exploded.has(key)) {
+          exploded.add(key);
+          foundNew = true;
+          if (world.getBlock(b.pos.x, b.pos.y, b.pos.z) !== 'air') {
+            world.removeBlock(b.pos);
+          }
+          this.smashRadius(world, b.pos, 1.5, broken);
+        }
+      }
     }
 
     return broken;

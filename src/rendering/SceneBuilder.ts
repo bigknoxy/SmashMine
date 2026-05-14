@@ -19,7 +19,7 @@ export function buildScene(world: World, scene: Scene): void {
   ground.userData.isGround = true;
   scene.add(ground);
 
-  const specialTypes: BlockType[] = ['shard_cluster', 'blast_crystal', 'lucky_cube', 'op_relic_block', 'gold_ore', 'copper_ore'];
+  const specialTypes: BlockType[] = ['shard_cluster', 'blast_crystal', 'lucky_cube', 'op_relic_block', 'gold_ore', 'copper_ore', 'volatile_crystal', 'time_crystal'];
   const instancesByType: Map<BlockType, Vec3[]> = new Map();
 
   for (const type of specialTypes) {
